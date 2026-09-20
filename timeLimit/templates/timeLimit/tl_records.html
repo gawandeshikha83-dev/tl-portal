@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TL Records | TL Management Portal</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ================= SIDEBAR ================= */
+
+        .sidebar {
+            width: 240px;
+            background: #172554;
+            color: white;
+            padding: 22px 14px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 10px;
+            margin-bottom: 25px;
+        }
+
+        .menu-title {
+            font-size: 11px;
+            color: #bfdbfe;
+            padding: 0 12px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .menu a {
+            display: block;
+            text-decoration: none;
+            color: #dbeafe;
+            padding: 12px 14px;
+            margin: 5px 0;
+            border-radius: 9px;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .menu a:hover,
+        .menu a.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        /* ================= MAIN ================= */
+
+        .main {
+            margin-left: 240px;
+            width: calc(100% - 240px);
+            padding: 25px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+
+        .page-title h1 {
+            margin: 0;
+            font-size: 25px;
+        }
+
+        .page-title p {
+            margin: 5px 0 0;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .admin-btn {
+            text-decoration: none;
+            background: #172554;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        /* ================= FILTER ================= */
+
+        .filter-box {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .filter-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #4b5563;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            padding: 0 10px;
+            background: white;
+            outline: none;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: #2563eb;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 7px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-add {
+            background: #16a34a;
+            color: white;
+        }
+
+        /* ================= SUMMARY ================= */
+
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .record-count {
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        /* ================= TABLE ================= */
+
+        .table-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1100px;
+        }
+
+        thead {
+            background: #172554;
+            color: white;
+        }
+
+        th {
+            padding: 13px 10px;
+            font-size: 12px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .sno {
+            font-weight: 700;
+            color: #1d4ed8;
+        }
+
+        /* ================= STATUS ================= */
+
+        .status {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .disposed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* ================= PDF ================= */
+
+        .pdf-yes {
+            color: #15803d;
+            font-weight: 700;
+        }
+
+        .pdf-no {
+            color: #9ca3af;
+        }
+
+        /* ================= ACTION BUTTONS ================= */
+
+        .action-btn {
+            display: inline-block;
+            text-decoration: none;
+            padding: 6px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-right: 3px;
+            font-family: inherit;
+        }
+
+        .view {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .delete:hover {
+            background: #fecaca;
+        }
+
+        /* ================= EMPTY ================= */
+
+        .empty {
+            text-align: center;
+            padding: 50px 20px;
+            color: #6b7280;
+        }
+
+        /* ================= MOBILE ================= */
+
+        @media (max-width: 1000px) {
+
+            .filters {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 750px) {
+
+            .sidebar {
+                width: 70px;
+                padding: 15px 8px;
+            }
+
+            .logo {
+                font-size: 0;
+            }
+
+            .logo::after {
+                content: "TL";
+                font-size: 20px;
+            }
+
+            .menu-title {
+                display: none;
+            }
+
+            .menu a {
+                font-size: 0;
+                text-align: center;
+            }
+
+            .menu a::first-letter {
+                font-size: 18px;
+            }
+
+            .main {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+                padding: 15px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .filters {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .admin-btn {
+                display: none;
+            }
+        }
+
+        @media (max-width: 500px) {
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .page-title h1 {
+                font-size: 21px;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+
+<div class="layout">
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            ⚖️ TL Portal
+        </div>
+
+        <div class="menu-title">
+            Main Menu
+        </div>
+
+        <div class="menu">
+
+            <a href="{% url 'dashboard' %}">
+                🏠 Dashboard
+            </a>
+
+            <a href="{% url 'tl_records' %}" class="active">
+                📋 TL Records
+            </a>
+
+            <a href="{% url 'add_tl' %}">
+                ➕ Add TL
+            </a>
+
+            <a href="{% url 'reports' %}">
+                📊 Reports
+            </a>
+
+            <a href="{% url 'excel_upload' %}">
+                📤 Excel Upload
+            </a>
+
+            <a href="{% url 'excel_download' %}">
+                📥 Excel Download
+            </a>
+
+            <a href="{% url 'pdf_download' %}">
+                📄 PDF Report
+            </a>
+
+            <a href="/admin/">
+                ⚙️ Admin
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main">
+
+        <!-- TOP BAR -->
+
+        <div class="topbar">
+
+            <div class="page-title">
+
+                <h1>
+                    📋 TL Records
+                </h1>
+
+                <p>
+                    All Time Limit records — Serial Number wise
+                </p>
+
+            </div>
+
+            <a href="/admin/" class="admin-btn">
+                ⚙️ Admin Panel
+            </a>
+
+        </div>
+
+
+        <!-- ================= FILTER ================= -->
+
+        <div class="filter-box">
+
+            <div class="filter-title">
+                🔎 Search & Filter
+            </div>
+
+            <form method="get">
+
+                <div class="filters">
+
+                    <!-- SEARCH -->
+
+                    <div class="field">
+
+                        <label>
+                            Search
+                        </label>
+
+                        <input
+                            type="text"
+                            name="search"
+                            value="{{ search }}"
+                            placeholder="TL No / Subject / Sender"
+                        >
+
+                    </div>
+
+                    <!-- SECTION -->
+
+                    <div class="field">
+
+                        <label>
+                            Section
+                        </label>
+
+                        <select name="section">
+
+                            <option value="">
+                                All Sections
+                            </option>
+
+                            {% for item in sections %}
+
+                                <option
+                                    value="{{ item }}"
+                                    {% if selected_section == item %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ item }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- YEAR -->
+
+                    <div class="field">
+
+                        <label>
+                            Year
+                        </label>
+
+                        <select name="year">
+
+                            <option value="">
+                                All Years
+                            </option>
+
+                            {% for item in years %}
+
+                                <option
+                                    value="{{ item.year }}"
+                                    {% if selected_year == item.year|stringformat:"s" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ item.year }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- STATUS -->
+
+                    <div class="field">
+
+                        <label>
+                            Status
+                        </label>
+
+                        <select name="status">
+
+                            <option value="">
+                                All Status
+                            </option>
+
+                            <option
+                                value="Pending"
+                                {% if selected_status == "Pending" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Pending
+                            </option>
+
+                            <option
+                                value="Disposed"
+                                {% if selected_status == "Disposed" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Disposed
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BUTTONS -->
+
+                <div class="buttons">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        🔎 Apply Filter
+                    </button>
+
+
+                    <a
+                        href="{% url 'tl_records' %}"
+                        class="btn btn-reset"
+                    >
+                        ↻ Reset
+                    </a>
+
+
+                    <a
+                        href="{% url 'add_tl' %}"
+                        class="btn btn-add"
+                    >
+                        ➕ Add New TL
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <!-- ================= SUMMARY ================= -->
+
+        <div class="summary">
+
+            <div class="record-count">
+
+                Showing
+
+                <strong>
+                    {{ records|length }}
+                </strong>
+
+                record{{ records|length|pluralize }}
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= TABLE ================= -->
+
+        <div class="table-card">
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                S.No.
+                            </th>
+
+                            <th>
+                                TL No.
+                            </th>
+
+                            <th>
+                                Received Date
+                            </th>
+
+                            <th>
+                                Sender
+                            </th>
+
+                            <th>
+                                Letter No. / Date
+                            </th>
+
+                            <th>
+                                Subject
+                            </th>
+
+                            <th>
+                                Section
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                TL PDF
+                            </th>
+
+                            <th>
+                                Answer PDF
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for record in records %}
+
+                        <tr>
+
+                            <!-- S.NO -->
+
+                            <td class="sno">
+                                {{ record.sno }}
+                            </td>
+
+
+                            <!-- TL NO -->
+
+                            <td>
+                                <strong>
+                                    {{ record.tl_no }}
+                                </strong>
+                            </td>
+
+
+                            <!-- RECEIVED DATE -->
+
+                            <td>
+                                {{ record.received_date|date:"d-m-Y" }}
+                            </td>
+
+
+                            <!-- SENDER -->
+
+                            <td>
+                                {{ record.sender_name }}
+                            </td>
+
+
+                            <!-- LETTER NO DATE -->
+
+                            <td>
+                                {{ record.letter_no_date }}
+                            </td>
+
+
+                            <!-- SUBJECT -->
+
+                            <td>
+                                {{ record.subject|default:"-" }}
+                            </td>
+
+
+                            <!-- SECTION -->
+
+                            <td>
+                                {{ record.section_name }}
+                            </td>
+
+
+                            <!-- STATUS -->
+
+                            <td>
+
+                                {% if record.current_status == "Pending" %}
+
+                                    <span class="status pending">
+                                        Pending
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status disposed">
+                                        Disposed
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- TL PDF -->
+
+                            <td>
+
+                                {% if record.tl_pdf %}
+
+                                    <span class="pdf-yes">
+                                        ✓ Available
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="pdf-no">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- ANSWER PDF -->
+
+                            <td>
+
+                                {% if record.answer_pdf %}
+
+                                    <span class="pdf-yes">
+                                        ✓ Available
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="pdf-no">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- ACTION -->
+
+                            <td>
+
+                                <!-- VIEW -->
+
+                                <a
+                                    href="{% url 'tl_detail' record.pk %}"
+                                    class="action-btn view"
+                                >
+                                    👁 View
+                                </a>
+
+
+                                <!-- EDIT -->
+
+                                <a
+                                    href="{% url 'edit_tl' record.pk %}"
+                                    class="action-btn edit"
+                                >
+                                    ✏ Edit
+                                </a>
+
+
+                                <!-- DELETE -->
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'delete_tl' record.pk %}"
+                                    style="display:inline;"
+                                    onsubmit="return confirm('क्या आप इस TL Record को delete करना चाहते हैं?');"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="action-btn delete"
+                                        style="border:none; cursor:pointer;"
+                                    >
+                                        🗑 Delete
+                                    </button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="11"
+                                class="empty"
+                            >
+
+                                <h3>
+                                    No TL Records Found
+                                </h3>
+
+                                <p>
+                                    Try changing your search or filters.
+                                </p>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+
+</html>

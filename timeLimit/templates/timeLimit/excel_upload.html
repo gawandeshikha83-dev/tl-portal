@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Excel Upload - TL Management Portal</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, "Noto Sans Devanagari", sans-serif;
+            background: #f4f7fb;
+            color: #1e293b;
+        }
+
+        /* ================= HEADER ================= */
+
+        .header {
+            background: #173f5f;
+            color: white;
+            padding: 20px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 3px 12px rgba(0,0,0,.12);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,.12);
+            padding: 10px 18px;
+            border-radius: 8px;
+            transition: .2s;
+        }
+
+        .header a:hover {
+            background: rgba(255,255,255,.22);
+        }
+
+        /* ================= CONTAINER ================= */
+
+        .container {
+            max-width: 1000px;
+            margin: 45px auto;
+            padding: 20px;
+        }
+
+        /* ================= CARD ================= */
+
+        .card {
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 5px 22px rgba(0,0,0,.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #173f5f;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 25px;
+        }
+
+        /* ================= INFO BOX ================= */
+
+        .info {
+            background: #f0f7fc;
+            border: 1px solid #d8e8f3;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .info-title {
+            font-size: 17px;
+            font-weight: bold;
+            color: #173f5f;
+            margin-bottom: 15px;
+        }
+
+        /* ================= EXCEL TABLE ================= */
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #dbe3ea;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th {
+            background: #173f5f;
+            color: white;
+            padding: 12px 10px;
+            text-align: center;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 11px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: center;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        tr:hover td {
+            background: #eef5fa;
+        }
+
+        .number {
+            font-weight: bold;
+            color: #173f5f;
+        }
+
+        /* ================= UPLOAD AREA ================= */
+
+        .upload-section {
+            margin-top: 28px;
+        }
+
+        .upload-label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #334155;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 14px;
+            border: 2px dashed #b8c7d5;
+            border-radius: 10px;
+            background: #f8fafc;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        input[type="file"]:hover {
+            border-color: #173f5f;
+            background: #f1f7fb;
+        }
+
+        /* ================= BUTTON ================= */
+
+        .button-area {
+            margin-top: 22px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #173f5f;
+            color: white;
+            border: none;
+            padding: 13px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: .2s;
+        }
+
+        button:hover {
+            background: #0f2f48;
+            transform: translateY(-1px);
+        }
+
+        /* ================= BACK ================= */
+
+        .back {
+            display: inline-block;
+            margin-top: 25px;
+            text-decoration: none;
+            color: #173f5f;
+            font-weight: bold;
+        }
+
+        .back:hover {
+            text-decoration: underline;
+        }
+
+        /* ================= NOTE ================= */
+
+        .note {
+            margin-top: 18px;
+            padding: 13px 15px;
+            background: #fff8e6;
+            border-left: 4px solid #e6a700;
+            border-radius: 6px;
+            color: #665000;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 700px) {
+
+            .header {
+                padding: 16px 18px;
+            }
+
+            .header h1 {
+                font-size: 19px;
+            }
+
+            .header a {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .container {
+                margin: 20px auto;
+                padding: 12px;
+            }
+
+            .card {
+                padding: 22px 16px;
+            }
+
+            .card h2 {
+                font-size: 21px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="header">
+
+    <h1>
+        TL Management Portal
+    </h1>
+
+    <a href="{% url 'dashboard' %}">
+        ← Dashboard
+    </a>
+
+</div>
+
+
+<!-- ================= MAIN ================= -->
+
+<div class="container">
+
+    <div class="card">
+
+        <h2>
+            Excel Upload
+        </h2>
+
+        <div class="subtitle">
+            TL Records को Excel file के माध्यम से portal में upload करें।
+        </div>
+
+
+        <!-- ================= EXCEL HEADINGS ================= -->
+
+        <div class="info">
+
+            <div class="info-title">
+                📋 Excel File का Format
+            </div>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                स.क्र.
+                            </th>
+
+                            <th>
+                                TL No.
+                            </th>
+
+                            <th>
+                                प्राप्ति दिनांक
+                            </th>
+
+                            <th>
+                                प्रेषक
+                            </th>
+
+                            <th>
+                                क्र/दिनांक
+                            </th>
+
+                            <th>
+                                विषय
+                            </th>
+
+                            <th>
+                                संबंधित शाखा का नाम
+                            </th>
+
+                            <th>
+                                विवरण
+                            </th>
+
+                            <th>
+                                वर्तमान स्थिति
+                            </th>
+
+                            <th>
+                                TL PDF
+                            </th>
+
+                            <th>
+                                Answer PDF
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        <tr>
+
+                            <td class="number">
+                                1
+                            </td>
+
+                            <td>
+                                TL-001
+                            </td>
+
+                            <td>
+                                20-09-2026
+                            </td>
+
+                            <td>
+                                प्रेषक का नाम
+                            </td>
+
+                            <td>
+                                क्र/123/2026
+                            </td>
+
+                            <td>
+                                पत्र का विषय
+                            </td>
+
+                            <td>
+                                संबंधित शाखा
+                            </td>
+
+                            <td>
+                                पत्र का विवरण
+                            </td>
+
+                            <td>
+                                Pending
+                            </td>
+
+                            <td>
+                                —
+                            </td>
+
+                            <td>
+                                —
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <div class="note">
+
+                <strong>ध्यान दें:</strong>
+                Excel की पहली row में ऊपर दिए गए headings रखें।
+                PDF columns केवल reference के लिए हैं; Excel upload के माध्यम से
+                PDF files upload नहीं होंगी। PDF files बाद में TL Edit/Add page
+                से upload की जा सकती हैं।
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= UPLOAD ================= -->
+
+        <form method="POST"
+              enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <div class="upload-section">
+
+                <label class="upload-label">
+
+                    📁 Excel File Select करें
+
+                </label>
+
+                <input type="file"
+                       name="excel_file"
+                       accept=".xlsx,.xls"
+                       required>
+
+            </div>
+
+
+            <div class="button-area">
+
+                <button type="submit">
+
+                    ⬆ Upload Excel
+
+                </button>
+
+            </div>
+
+        </form>
+
+
+        <!-- ================= BACK ================= -->
+
+        <a class="back"
+           href="{% url 'tl_records' %}">
+
+            ← Back to TL Records
+
+        </a>
+
+    </div>
+
+</div>
+
+
+</body>
+
+</html>

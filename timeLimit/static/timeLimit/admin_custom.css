@@ -1,0 +1,261 @@
+:root {
+    --primary: #1f4e78;
+    --secondary: #2f75b5;
+    --background: #f4f7fb;
+    --border: #d9e2ec;
+}
+
+body {
+    background: #f4f6f9 !important;
+    color: #263238 !important;
+    font-family: "Segoe UI", "Noto Sans Devanagari", Arial, sans-serif !important;
+    font-size: 16px !important;
+}
+
+/* Main headings */
+h1 {
+    font-size: 30px !important;
+    font-weight: 700 !important;
+}
+
+h2 {
+    font-size: 18px !important;
+}
+
+/* Table text */
+#result_list {
+    font-size: 16px !important;
+}
+
+#result_list thead th {
+    font-size: 15px !important;
+    padding: 15px 14px !important;
+}
+
+#result_list tbody td {
+    font-size: 16px !important;
+    padding: 14px !important;
+}
+
+/* Menu / links */
+a {
+    font-size: 16px;
+}
+
+/* Form labels */
+.form-row label,
+label {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+/* Form fields */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="password"],
+input[type="date"],
+textarea,
+select {
+    font-size: 16px !important;
+    min-height: 42px !important;
+}
+
+/* Buttons */
+.button,
+input[type="submit"],
+input[type="button"],
+.submit-row input {
+    font-size: 16px !important;
+    padding: 11px 20px !important;
+}
+#header {
+    background: linear-gradient(135deg, #1f4e78, #2f75b5) !important;
+    padding: 15px 25px !important;
+    box-shadow: 0 3px 12px rgba(0,0,0,.15);
+}
+
+#branding h1,
+#branding h1 a {
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 22px !important;
+}
+
+#user-tools,
+#user-tools a {
+    color: white !important;
+}
+
+#content {
+    max-width: 1450px;
+    margin: 25px auto !important;
+    padding: 0 20px !important;
+}
+
+#content h1 {
+    color: #1f4e78 !important;
+    font-weight: 700 !important;
+}
+
+div.breadcrumbs {
+    background: white !important;
+    padding: 12px 25px !important;
+    border-bottom: 1px solid var(--border);
+}
+
+.module,
+.inline-group {
+    background: white !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(31,78,120,.08);
+    margin-bottom: 22px !important;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+    background: #1f4e78 !important;
+    color: white !important;
+    padding: 12px 15px !important;
+}
+
+.form-row {
+    padding: 13px 18px !important;
+    border-bottom: 1px solid #edf1f5 !important;
+}
+
+.form-row label {
+    font-weight: 600 !important;
+    color: #344054 !important;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="date"],
+input[type="password"],
+textarea,
+select {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 7px !important;
+    padding: 9px 11px !important;
+    background: white !important;
+    font-size: 14px !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: #2f75b5 !important;
+    box-shadow: 0 0 0 3px rgba(47,117,181,.12) !important;
+    outline: none !important;
+}
+
+textarea {
+    min-height: 100px;
+}
+
+.field-current_situation textarea {
+    min-height: 120px;
+    font-family: "Noto Sans Devanagari", "Mangal", "Segoe UI", sans-serif;
+}
+
+input[type="submit"],
+.submit-row input[name="_save"] {
+    background: #1f4e78 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 7px !important;
+    padding: 10px 20px !important;
+    font-weight: 600 !important;
+}
+
+input[type="submit"]:hover,
+.submit-row input[name="_save"]:hover {
+    background: #163a5c !important;
+}
+
+.addlink {
+    background: #1f4e78 !important;
+    color: white !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+}
+
+#result_list {
+    border-radius: 10px !important;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 3px 12px rgba(0,0,0,.05);
+}
+
+#result_list thead th {
+    background: #1f4e78 !important;
+    color: white !important;
+    padding: 12px 10px !important;
+}
+
+#result_list tbody td,
+#result_list tbody th {
+    padding: 11px 10px !important;
+    border-bottom: 1px solid #edf1f5 !important;
+}
+
+#result_list tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+#result_list tbody tr:hover {
+    background: #eaf2f8 !important;
+}
+
+#toolbar {
+    background: white !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    padding: 15px !important;
+    margin-bottom: 20px !important;
+}
+
+#changelist-filter {
+    background: white !important;
+    border-radius: 10px !important;
+    border: 1px solid var(--border);
+}
+
+#changelist-filter h2 {
+    background: #1f4e78 !important;
+    color: white !important;
+}
+
+input[type="file"] {
+    border: 1px dashed #94a3b8 !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    background: #f8fafc !important;
+}
+
+.submit-row {
+    background: white !important;
+    border-top: 1px solid var(--border) !important;
+    padding: 15px 20px !important;
+}
+
+@media (max-width: 900px) {
+    #content {
+        padding: 0 10px !important;
+    }
+
+    #result_list {
+        display: block;
+        overflow-x: auto;
+    }
+
+    #branding h1,
+    #branding h1 a {
+        font-size: 18px !important;
+    }
+}

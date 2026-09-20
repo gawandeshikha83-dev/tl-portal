@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reports - TL Management Portal</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .header {
+            background: #173f5f;
+            color: white;
+            padding: 22px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+        }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            background: #ffffff22;
+            padding: 10px 18px;
+            border-radius: 8px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 4px 18px rgba(0,0,0,.08);
+            margin-bottom: 25px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        select {
+            padding: 11px;
+            min-width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+        }
+
+        button {
+            padding: 11px 20px;
+            background: #173f5f;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th {
+            background: #173f5f;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            padding: 11px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f5f8fb;
+        }
+
+        .pending {
+            color: #b45309;
+            font-weight: bold;
+        }
+
+        .disposed {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .download {
+            display: inline-block;
+            margin-top: 15px;
+            margin-right: 10px;
+            padding: 11px 18px;
+            background: #173f5f;
+            color: white;
+            text-decoration: none;
+            border-radius: 7px;
+        }
+
+        @media(max-width:700px) {
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 7px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>TL Management Portal</h1>
+
+    <a href="{% url 'dashboard' %}">
+        ← Dashboard
+    </a>
+</div>
+
+<div class="container">
+
+    <div class="card">
+
+        <h2>TL Reports</h2>
+
+        <form method="GET">
+
+            <div class="filters">
+
+                <div>
+                    <label>Status</label><br>
+
+                    <select name="status">
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option value="Pending"
+                            {% if selected_status == 'Pending' %}selected{% endif %}>
+                            Pending
+                        </option>
+
+                        <option value="Disposed"
+                            {% if selected_status == 'Disposed' %}selected{% endif %}>
+                            Disposed
+                        </option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Section</label><br>
+
+                    <select name="section">
+
+                        <option value="">
+                            All Sections
+                        </option>
+
+                        {% for section in sections %}
+
+                            <option value="{{ section }}"
+                                {% if selected_section == section %}selected{% endif %}>
+
+                                {{ section }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+
+                <button type="submit">
+                    Apply Filter
+                </button>
+
+            </div>
+
+        </form>
+
+
+        <a class="download" href="{% url 'excel_download' %}">
+            Download Excel
+        </a>
+
+        <a class="download" href="{% url 'pdf_download' %}">
+            Download PDF
+        </a>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>
+            Total Records: {{ records|length }}
+        </h3>
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>S.No</th>
+                    <th>TL No</th>
+                    <th>Subject</th>
+                    <th>Received Date</th>
+                    <th>Sender</th>
+                    <th>Section</th>
+                    <th>Status</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for record in records %}
+
+                <tr>
+
+                    <td>{{ record.sno }}</td>
+
+                    <td>{{ record.tl_no }}</td>
+
+                    <td>{{ record.subject }}</td>
+
+                    <td>{{ record.received_date }}</td>
+
+                    <td>{{ record.sender_name }}</td>
+
+                    <td>{{ record.section_name }}</td>
+
+                    <td>
+
+                        {% if record.current_status == 'Pending' %}
+
+                            <span class="pending">
+                                Pending
+                            </span>
+
+                        {% else %}
+
+                            <span class="disposed">
+                                Disposed
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="7">
+                        No records found.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+</html>

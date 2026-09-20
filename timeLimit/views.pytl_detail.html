@@ -1,0 +1,415 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>{{ record.tl_no }} - TL Management Portal</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #1f2937;
+        }
+
+        /* HEADER */
+
+        .header {
+            background: #1f2937;
+            color: white;
+            padding: 18px 30px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* MAIN */
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* TOP BAR */
+
+        .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+        .page-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .navigation {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 10px 18px;
+            border-radius: 7px;
+            text-decoration: none;
+            font-weight: bold;
+            color: white;
+            background: #2563eb;
+        }
+
+        .nav-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .nav-disabled {
+            background: #9ca3af;
+            pointer-events: none;
+        }
+
+        /* LEFT CARD */
+
+        .details-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.12);
+        }
+
+        .details-title {
+            font-size: 21px;
+            font-weight: bold;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .field {
+            margin-bottom: 24px;
+        }
+
+        .label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #6b7280;
+            margin-bottom: 7px;
+        }
+
+        .value {
+            font-size: 16px;
+            line-height: 1.7;
+            word-wrap: break-word;
+        }
+
+        .tl-number {
+            font-size: 25px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .description {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 80px;
+            white-space: pre-wrap;
+        }
+
+        .situation {
+            background: #eff6ff;
+            border-left: 5px solid #2563eb;
+            padding: 15px;
+            border-radius: 7px;
+            min-height: 70px;
+            white-space: pre-wrap;
+        }
+
+        /* BOTTOM */
+
+        .bottom-bar {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .back-btn {
+            padding: 10px 18px;
+            background: #374151;
+            color: white;
+            text-decoration: none;
+            border-radius: 7px;
+        }
+
+        .edit-btn {
+            padding: 10px 18px;
+            background: #16a34a;
+            color: white;
+            text-decoration: none;
+            border-radius: 7px;
+        }
+
+        /* THANK YOU */
+
+        .thank-you {
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            padding: 80px 30px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.12);
+        }
+
+        .thank-you h1 {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: #2563eb;
+        }
+
+        .thank-you p {
+            font-size: 18px;
+            color: #6b7280;
+        }
+
+        .dashboard-btn {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 22px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 7px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 700px) {
+
+            .header {
+                font-size: 20px;
+                padding: 15px;
+            }
+
+            .container {
+                margin-top: 20px;
+                padding: 0 12px;
+            }
+
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .navigation {
+                width: 100%;
+            }
+
+            .nav-btn {
+                flex: 1;
+                text-align: center;
+            }
+
+            .details-card {
+                padding: 20px;
+            }
+
+            .bottom-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .back-btn,
+            .edit-btn {
+                text-align: center;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="header">
+    TL Management Portal
+</div>
+
+
+<div class="container">
+
+    {% if is_last %}
+
+        <!-- LAST RECORD -->
+
+        <div class="thank-you">
+
+            <h1>Thank You</h1>
+
+            <p>
+                You have viewed all TL records.
+            </p>
+
+            <a href="{% url 'tl_records' %}" class="dashboard-btn">
+                Back to TL Records
+            </a>
+
+        </div>
+
+    {% else %}
+
+        <!-- TOP BAR -->
+
+        <div class="top-bar">
+
+            <div class="page-title">
+                TL Details
+            </div>
+
+            <div class="navigation">
+
+                {% if request.GET.from %}
+                    <a href="{{ request.GET.from }}"
+                       class="nav-btn">
+                        ← Back
+                    </a>
+                {% else %}
+                    <a href="{% url 'tl_records' %}"
+                       class="nav-btn">
+                        ← Back
+                    </a>
+                {% endif %}
+
+
+                {% if next_record %}
+
+                    <a href="{% url 'tl_detail' next_record.id %}"
+                       class="nav-btn">
+                        Next →
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- DETAILS CARD -->
+
+        <div class="details-card">
+
+            <div class="details-title">
+                TL Information
+            </div>
+
+
+            <!-- TL NO -->
+
+            <div class="field">
+
+                <div class="label">
+                    TL No.
+                </div>
+
+                <div class="value tl-number">
+                    {{ record.tl_no }}
+                </div>
+
+            </div>
+
+
+            <!-- SUBJECT -->
+
+            <div class="field">
+
+                <div class="label">
+                    Subject
+                </div>
+
+                <div class="value">
+
+                    {% if record.subject %}
+                        {{ record.subject }}
+                    {% else %}
+                        -
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="field">
+
+                <div class="label">
+                    Description
+                </div>
+
+                <div class="value description">
+
+                    {% if record.description %}
+                        {{ record.description }}
+                    {% else %}
+                        -
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- CURRENT SITUATION -->
+
+            <div class="field">
+
+                <div class="label">
+                    Current Situation
+                </div>
+
+                <div class="value situation">
+
+                    {% if record.current_situation %}
+                        {{ record.current_situation }}
+                    {% else %}
+                        -
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- BOTTOM BUTTONS -->
+
+            <div class="bottom-bar">
+
+                <a href="{% url 'tl_records' %}"
+                   class="back-btn">
+                    ← Back to TL Records
+                </a>
+
+                <a href="{% url 'edit_tl' record.id %}"
+                   class="edit-btn">
+                    ✏ Edit TL
+                </a>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>
+```
+ 	
