@@ -6,11 +6,6 @@ from django.contrib import messages
 
 from .models import TimeLimit
 from .forms import TimeLimitForm
-from .google_sheet_sync import (
-    save_record_to_sheet,
-    delete_record_from_sheet,
-    sync_sheet_to_portal,
-)
 
 import openpyxl
 from openpyxl import Workbook
@@ -136,14 +131,10 @@ def dashboard(request):
 
         else:
 
-            section_records = (
-                TimeLimit.objects.filter(
-                    section_name__isnull=True
-                )
-                |
-                TimeLimit.objects.filter(
-                    section_name=''
-                )
+            section_records = TimeLimit.objects.filter(
+                section_name__isnull=True
+            ) | TimeLimit.objects.filter(
+                section_name=''
             )
 
         total = section_records.count()
@@ -262,7 +253,6 @@ def dashboard(request):
         'monthly_data': monthly_data,
 
         'recent_records': recent_records,
-
     }
 
     return render(
@@ -277,17 +267,6 @@ def dashboard(request):
 # ============================================================
 
 def tl_records(request):
-
-    try:
-
-        sync_sheet_to_portal()
-
-    except Exception as e:
-
-        messages.warning(
-            request,
-            f'Google Sheet sync failed: {e}'
-        )
 
     records = TimeLimit.objects.all()
 
@@ -313,8 +292,6 @@ def tl_records(request):
             Q(section_name__icontains=search) |
 
             Q(description__icontains=search) |
-
-            Q(current_situation__icontains=search) |
 
             Q(letter_no_date__icontains=search)
 
@@ -393,7 +370,7 @@ def tl_records(request):
         )
 
     # --------------------------------------------------------
-    # ORDER
+    # ORDER BY S.NO
     # --------------------------------------------------------
 
     records = records.order_by(
@@ -445,7 +422,6 @@ def tl_records(request):
         'selected_year': year,
 
         'selected_status': status,
-
     }
 
     return render(
@@ -566,23 +542,12 @@ def add_tl(request):
 
         if form.is_valid():
 
-            record = form.save()
+            form.save()
 
-            try:
-
-                save_record_to_sheet(record)
-
-                messages.success(
-                    request,
-                    'TL Record successfully added and Google Sheet updated.'
-                )
-
-            except Exception as e:
-
-                messages.warning(
-                    request,
-                    f'TL added, but Google Sheet sync failed: {e}'
-                )
+            messages.success(
+                request,
+                'TL Record successfully added.'
+            )
 
             return redirect(
                 'tl_records'
@@ -623,23 +588,12 @@ def edit_tl(request, pk):
 
         if form.is_valid():
 
-            record = form.save()
+            form.save()
 
-            try:
-
-                save_record_to_sheet(record)
-
-                messages.success(
-                    request,
-                    'TL Record successfully updated and Google Sheet updated.'
-                )
-
-            except Exception as e:
-
-                messages.warning(
-                    request,
-                    f'TL updated, but Google Sheet sync failed: {e}'
-                )
+            messages.success(
+                request,
+                'TL Record successfully updated.'
+            )
 
             return redirect(
                 'tl_records'
@@ -665,6 +619,10 @@ def edit_tl(request, pk):
 # DELETE TL
 # ============================================================
 
+# ============================================================
+# DELETE TL
+# ============================================================
+
 def delete_tl(request, pk):
 
     record = get_object_or_404(
@@ -674,34 +632,16 @@ def delete_tl(request, pk):
 
     if request.method == 'POST':
 
-        tl_no = record.tl_no
-
         record.delete()
 
-        try:
-
-            delete_record_from_sheet(tl_no)
-
-            messages.success(
-                request,
-                'TL Record deleted successfully from Portal and Google Sheet.'
-            )
-
-        except Exception as e:
-
-            messages.warning(
-                request,
-                f'TL deleted from Portal, but Google Sheet sync failed: {e}'
-            )
-
-        return redirect(
-            'tl_records'
+        messages.success(
+            request,
+            'TL Record deleted successfully.'
         )
 
-    return redirect(
-        'tl_records'
-    )
+        return redirect('tl_records')
 
+    return redirect('tl_records')
 
 # ============================================================
 # REPORTS
@@ -819,7 +759,7 @@ def excel_download(request):
     sheet.title = 'TL Records'
 
     # --------------------------------------------------------
-    # HEADERS
+    # CURRENT FORMAT HEADERS
     # --------------------------------------------------------
 
     headers = [
@@ -841,8 +781,6 @@ def excel_download(request):
         'विवरण',
 
         'वर्तमान स्थिति',
-
-        'स्थिति',
 
         'TL PDF',
 
@@ -906,8 +844,6 @@ def excel_download(request):
 
             record.description,
 
-            record.current_situation,
-
             record.current_status,
 
             tl_pdf,
@@ -927,13 +863,9 @@ def excel_download(request):
         )
 
         cell.alignment = cell.alignment.copy(
-
             horizontal='center',
-
             vertical='center',
-
             wrap_text=True
-
         )
 
     # --------------------------------------------------------
@@ -945,11 +877,8 @@ def excel_download(request):
         for cell in row:
 
             cell.alignment = cell.alignment.copy(
-
                 vertical='top',
-
                 wrap_text=True
-
             )
 
     # --------------------------------------------------------
@@ -974,13 +903,11 @@ def excel_download(request):
 
         'H': 45,
 
-        'I': 40,
+        'I': 18,
 
-        'J': 18,
+        'J': 35,
 
         'K': 35,
-
-        'L': 35,
 
     }
 
@@ -991,7 +918,7 @@ def excel_download(request):
         ].width = width
 
     # --------------------------------------------------------
-    # FREEZE HEADER
+    # FREEZE
     # --------------------------------------------------------
 
     sheet.freeze_panes = 'A2'
@@ -1008,7 +935,9 @@ def excel_download(request):
     )
 
     response['Content-Disposition'] = (
+
         'attachment; filename="TL_Records.xlsx"'
+
     )
 
     workbook.save(response)
@@ -1041,6 +970,10 @@ def excel_upload(request):
 
         try:
 
+            # ------------------------------------------------
+            # OPEN EXCEL
+            # ------------------------------------------------
+
             workbook = openpyxl.load_workbook(
                 excel_file,
                 data_only=True
@@ -1050,26 +983,29 @@ def excel_upload(request):
 
             count = 0
 
+            # ------------------------------------------------
+            # READ ROWS
+            # ------------------------------------------------
+
             for row in sheet.iter_rows(
                 min_row=2,
                 values_only=True
             ):
 
                 if not row:
+
                     continue
 
                 row = list(row)
 
-                # ------------------------------------------------
-                # MINIMUM 12 COLUMNS
-                # ------------------------------------------------
+                # Ensure minimum 11 columns
 
-                while len(row) < 12:
+                while len(row) < 11:
 
                     row.append(None)
 
                 # ------------------------------------------------
-                # EXCEL FORMAT
+                # CURRENT EXCEL FORMAT
                 # ------------------------------------------------
 
                 sno = row[0]
@@ -1088,11 +1024,7 @@ def excel_upload(request):
 
                 description = row[7]
 
-                # IMPORTANT
-                current_situation = row[8]
-
-                # IMPORTANT
-                current_status = row[9]
+                status_value = row[8]
 
                 # ------------------------------------------------
                 # TL NO REQUIRED
@@ -1134,11 +1066,9 @@ def excel_upload(request):
                 # STATUS
                 # ------------------------------------------------
 
-                current_status = str(
-                    current_status or ''
-                ).strip()
-
-                if current_status not in [
+                if str(
+                    status_value or ''
+                ).strip() not in [
 
                     'Pending',
 
@@ -1146,7 +1076,13 @@ def excel_upload(request):
 
                 ]:
 
-                    current_status = 'Pending'
+                    status_value = 'Pending'
+
+                else:
+
+                    status_value = str(
+                        status_value
+                    ).strip()
 
                 # ------------------------------------------------
                 # CREATE RECORD
@@ -1182,11 +1118,7 @@ def excel_upload(request):
                         description or ''
                     ).strip(),
 
-                    current_situation=str(
-                        current_situation or ''
-                    ).strip(),
-
-                    current_status=current_status,
+                    current_status=status_value,
 
                 )
 
@@ -1221,101 +1153,34 @@ def excel_upload(request):
 
 
 # ============================================================
-# PDF FONTS - MANGAL + ARIAL UNICODE
+# PDF FONT
 # ============================================================
 
-def get_pdf_fonts():
+def get_pdf_font():
 
-    fonts = {}
+    mangal_path = r"C:\Windows\Fonts\mangal.ttf"
 
-    # --------------------------------------------------------
-    # MANGAL
-    # --------------------------------------------------------
+    try:
 
-    mangal_paths = [
+        if (
+            'Mangal'
+            not in pdfmetrics.getRegisteredFontNames()
+        ):
 
-        r"C:\Windows\Fonts\mangal.ttf",
+            pdfmetrics.registerFont(
 
-        r"C:\Windows\Fonts\MANGAL.TTF",
-
-    ]
-
-    mangal_loaded = False
-
-    for mangal_path in mangal_paths:
-
-        try:
-
-            if 'Mangal' not in pdfmetrics.getRegisteredFontNames():
-
-                pdfmetrics.registerFont(
-                    TTFont(
-                        'Mangal',
-                        mangal_path
-                    )
+                TTFont(
+                    'Mangal',
+                    mangal_path
                 )
 
-            fonts['main'] = 'Mangal'
+            )
 
-            mangal_loaded = True
+        return 'Mangal'
 
-            break
+    except Exception:
 
-        except Exception:
-
-            continue
-
-    if not mangal_loaded:
-
-        fonts['main'] = 'Helvetica'
-
-    # --------------------------------------------------------
-    # ARIAL UNICODE MS
-    # --------------------------------------------------------
-
-    arial_unicode_paths = [
-
-        r"C:\Windows\Fonts\ARIALUNI.TTF",
-
-        r"C:\Windows\Fonts\arialuni.ttf",
-
-        r"C:\Windows\Fonts\Arial Unicode MS.ttf",
-
-    ]
-
-    arial_loaded = False
-
-    for arial_path in arial_unicode_paths:
-
-        try:
-
-            if (
-                'ArialUnicode'
-                not in pdfmetrics.getRegisteredFontNames()
-            ):
-
-                pdfmetrics.registerFont(
-                    TTFont(
-                        'ArialUnicode',
-                        arial_path
-                    )
-                )
-
-            fonts['unicode'] = 'ArialUnicode'
-
-            arial_loaded = True
-
-            break
-
-        except Exception:
-
-            continue
-
-    if not arial_loaded:
-
-        fonts['unicode'] = fonts['main']
-
-    return fonts
+        return 'Helvetica'
 
 
 # ============================================================
@@ -1392,16 +1257,10 @@ def pdf_download(request):
 
     styles = getSampleStyleSheet()
 
-    # --------------------------------------------------------
-    # FONTS
-    # --------------------------------------------------------
-
-    fonts = get_pdf_fonts()
-
-    font_name = fonts['main']
+    font_name = get_pdf_font()
 
     # --------------------------------------------------------
-    # TITLE STYLE
+    # TITLE
     # --------------------------------------------------------
 
     title_style = ParagraphStyle(
@@ -1421,10 +1280,6 @@ def pdf_download(request):
         spaceAfter=6,
 
     )
-
-    # --------------------------------------------------------
-    # SUBTITLE STYLE
-    # --------------------------------------------------------
 
     subtitle_style = ParagraphStyle(
 
@@ -1449,7 +1304,7 @@ def pdf_download(request):
     )
 
     # --------------------------------------------------------
-    # BODY STYLE
+    # BODY
     # --------------------------------------------------------
 
     body_style = ParagraphStyle(
@@ -1460,9 +1315,9 @@ def pdf_download(request):
 
         fontName=font_name,
 
-        fontSize=6.4,
+        fontSize=6.8,
 
-        leading=8,
+        leading=8.5,
 
         wordWrap='CJK',
 
@@ -1471,7 +1326,7 @@ def pdf_download(request):
     )
 
     # --------------------------------------------------------
-    # HEADER STYLE
+    # HEADER
     # --------------------------------------------------------
 
     header_style = ParagraphStyle(
@@ -1482,9 +1337,9 @@ def pdf_download(request):
 
         fontName=font_name,
 
-        fontSize=6.3,
+        fontSize=6.8,
 
-        leading=7.5,
+        leading=8.5,
 
         textColor=colors.white,
 
@@ -1494,9 +1349,9 @@ def pdf_download(request):
 
     )
 
-    # ========================================================
-    # HEADERS
-    # ========================================================
+    # --------------------------------------------------------
+    # CURRENT PDF HEADERS
+    # --------------------------------------------------------
 
     headers = [
 
@@ -1512,13 +1367,11 @@ def pdf_download(request):
 
         'विषय',
 
-        'संबंधित शाखा का नाम',
+        'संबंधित शाखा',
 
         'विवरण',
 
         'वर्तमान स्थिति',
-
-        'स्थिति',
 
     ]
 
@@ -1532,7 +1385,7 @@ def pdf_download(request):
 
         Paragraph(
 
-            f'<b>{escape(str(header))}</b>',
+            f'<b>{escape(header)}</b>',
 
             header_style
 
@@ -1542,9 +1395,9 @@ def pdf_download(request):
 
     ])
 
-    # ========================================================
+    # --------------------------------------------------------
     # RECORD DATA
-    # ========================================================
+    # --------------------------------------------------------
 
     for record in records:
 
@@ -1592,18 +1445,6 @@ def pdf_download(request):
                 record.description or ''
             ),
 
-            # -----------------------------------------------
-            # वर्तमान स्थिति
-            # -----------------------------------------------
-
-            str(
-                record.current_situation or ''
-            ),
-
-            # -----------------------------------------------
-            # स्थिति
-            # -----------------------------------------------
-
             str(
                 record.current_status or ''
             ),
@@ -1637,37 +1478,35 @@ def pdf_download(request):
             row_data
         )
 
-    # ========================================================
+    # --------------------------------------------------------
     # COLUMN WIDTHS
-    # ========================================================
+    # --------------------------------------------------------
 
     col_widths = [
 
-        32,     # S.No
+        38,    # S.No
 
-        58,     # TL No.
+        65,    # TL No.
 
-        68,     # Received Date
+        70,    # Received Date
 
-        82,     # Sender
+        90,    # Sender
 
-        68,     # Kr/Date
+        75,    # Kr/Date
 
-        90,     # Subject
+        105,   # Subject
 
-        88,     # Section
+        105,   # Section
 
-        135,    # Description
+        195,   # Description
 
-        130,    # Current Situation
-
-        54,     # Status
+        65,    # Status
 
     ]
 
-    # ========================================================
+    # --------------------------------------------------------
     # TABLE
-    # ========================================================
+    # --------------------------------------------------------
 
     table = Table(
 
@@ -1815,9 +1654,9 @@ def pdf_download(request):
 
     )
 
-    # ========================================================
+    # --------------------------------------------------------
     # STORY
-    # ========================================================
+    # --------------------------------------------------------
 
     story = [
 
@@ -1839,10 +1678,6 @@ def pdf_download(request):
         ),
 
     ]
-
-    # ========================================================
-    # BUILD
-    # ========================================================
 
     document.build(
 

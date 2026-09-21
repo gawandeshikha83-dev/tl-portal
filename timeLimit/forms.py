@@ -16,6 +16,7 @@ class TimeLimitForm(forms.ModelForm):
             'subject',
             'section_name',
             'description',
+            'current_situation',
             'current_status',
             'tl_pdf',
             'answer_pdf',
@@ -63,6 +64,12 @@ class TimeLimitForm(forms.ModelForm):
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
                 'placeholder': 'विवरण',
+                'rows': 4
+            }),
+
+            'current_situation': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'वर्तमान स्थिति यहाँ लिखें...',
                 'rows': 4
             }),
 

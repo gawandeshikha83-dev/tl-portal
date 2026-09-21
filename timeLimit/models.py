@@ -27,11 +27,11 @@ class TimeLimit(models.Model):
     )
 
     letter_no_date = models.CharField(
-    max_length=200,
-    blank=True,
-    default='',
-    verbose_name='क्र/दिनांक'
-)
+        max_length=200,
+        blank=True,
+        default='',
+        verbose_name='क्र/दिनांक'
+    )
 
     subject = models.CharField(
         max_length=300,
@@ -49,11 +49,17 @@ class TimeLimit(models.Model):
         blank=True
     )
 
+    current_situation = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='वर्तमान स्थिति'
+    )
+
     current_status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='Pending',
-        verbose_name='वर्तमान स्थिति'
+        verbose_name='स्थिति'
     )
 
     tl_pdf = models.FileField(
