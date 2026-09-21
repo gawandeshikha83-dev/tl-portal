@@ -25,8 +25,11 @@ SECRET_KEY = 'django-insecure-(a2i)h3#vh+u=b+&11uiz+ke9d35fo-eqk)ojghrpbe#2s(=6+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "tl-portal.onrender.com"]
-# Application definition
+ALLOWED_HOSTS = [
+    "tl-portal-1.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
