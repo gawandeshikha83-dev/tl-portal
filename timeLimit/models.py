@@ -76,6 +76,18 @@ class TimeLimit(models.Model):
         verbose_name='Answer PDF'
     )
 
+    tl_pdf_drive_url = models.URLField(
+        blank=True,
+        default='',
+        verbose_name='TL PDF Drive URL'
+    )
+
+    answer_pdf_drive_url = models.URLField(
+        blank=True,
+        default='',
+        verbose_name='Answer PDF Drive URL'
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )

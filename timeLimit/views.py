@@ -11,6 +11,11 @@ from .google_sheet_sync import (
     delete_record_from_sheet,
     sync_sheet_to_portal,
 )
+from .google_drive import (
+    upload_file_to_drive,
+    TL_PDF_FOLDER_ID,
+    ANSWER_PDF_FOLDER_ID,
+)
 
 import openpyxl
 from openpyxl import Workbook
@@ -564,33 +569,99 @@ def add_tl(request):
             request.FILES
         )
 
+        print("POST:", request.POST)
+        print("FILES:", request.FILES)
+        print("TL PDF:", request.FILES.get("tl_pdf"))
+        print("ANSWER PDF:", request.FILES.get("answer_pdf"))
+
         if form.is_valid():
 
             record = form.save()
 
             try:
 
+                # =========================
+                # TL PDF → GOOGLE DRIVE
+                # =========================
+
+                if record.tl_pdf:
+
+                    with open(record.tl_pdf.path, "rb") as pdf_file:
+
+                        uploaded_file = upload_file_to_drive(
+                            pdf_file,
+                            record.tl_pdf.name.split("/")[-1],
+                            TL_PDF_FOLDER_ID
+                        )
+
+                    record.tl_pdf_drive_url = (
+                        uploaded_file.get("webViewLink")
+                        or uploaded_file.get("webContentLink")
+                        or ""
+                    )
+
+
+                # =========================
+                # ANSWER PDF → GOOGLE DRIVE
+                # =========================
+
+                if record.answer_pdf:
+
+                    with open(record.answer_pdf.path, "rb") as pdf_file:
+
+                        uploaded_file = upload_file_to_drive(
+                            pdf_file,
+                            record.answer_pdf.name.split("/")[-1],
+                            ANSWER_PDF_FOLDER_ID
+                        )
+
+                    record.answer_pdf_drive_url = (
+                        uploaded_file.get("webViewLink")
+                        or uploaded_file.get("webContentLink")
+                        or ""
+                    )
+
+
+                # =========================
+                # SAVE DRIVE LINKS
+                # =========================
+
+                record.save()
+
+
+                # =========================
+                # GOOGLE SHEET
+                # =========================
+
                 save_record_to_sheet(record)
+
 
                 messages.success(
                     request,
-                    'TL Record successfully added and Google Sheet updated.'
+                    'TL Record successfully added, PDFs uploaded to Google Drive and Google Sheet updated.'
                 )
+
 
             except Exception as e:
 
-                messages.warning(
-                    request,
-                    f'TL added, but Google Sheet sync failed: {e}'
+                print(
+                    "GOOGLE DRIVE/SHEET ERROR:",
+                    repr(e)
                 )
 
-            return redirect(
-                'tl_records'
-            )
+                messages.warning(
+                    request,
+                    f'TL added, but Google Drive/Sheet sync failed: {e}'
+                )
+
+
+            return redirect('tl_records')
+
 
     else:
 
         form = TimeLimitForm()
+
 
     return render(
         request,
@@ -600,8 +671,6 @@ def add_tl(request):
             'title': 'Add New TL'
         }
     )
-
-
 # ============================================================
 # EDIT TL
 # ============================================================
@@ -627,18 +696,61 @@ def edit_tl(request, pk):
 
             try:
 
+                # -----------------------------
+                # Upload NEW TL PDF to Google Drive
+                # -----------------------------
+                if 'tl_pdf' in request.FILES:
+
+                    with record.tl_pdf.open('rb') as pdf_file:
+
+                        uploaded_file = upload_file_to_drive(
+                            pdf_file,
+                            record.tl_pdf.name.split('/')[-1],
+                            TL_PDF_FOLDER_ID
+                        )
+
+                    record.tl_pdf_drive_url = (
+                        uploaded_file.get('webViewLink')
+                        or uploaded_file.get('webContentLink')
+                        or ''
+                    )
+
+                # -----------------------------
+                # Upload NEW Answer PDF to Google Drive
+                # -----------------------------
+                if 'answer_pdf' in request.FILES:
+
+                    with record.answer_pdf.open('rb') as pdf_file:
+
+                        uploaded_file = upload_file_to_drive(
+                            pdf_file,
+                            record.answer_pdf.name.split('/')[-1],
+                            ANSWER_PDF_FOLDER_ID
+                        )
+
+                    record.answer_pdf_drive_url = (
+                        uploaded_file.get('webViewLink')
+                        or uploaded_file.get('webContentLink')
+                        or ''
+                    )
+
+                record.save()
+
+                # -----------------------------
+                # Update Google Sheet
+                # -----------------------------
                 save_record_to_sheet(record)
 
                 messages.success(
                     request,
-                    'TL Record successfully updated and Google Sheet updated.'
+                    'TL Record successfully updated, PDFs synced to Google Drive and Google Sheet updated.'
                 )
 
             except Exception as e:
 
                 messages.warning(
                     request,
-                    f'TL updated, but Google Sheet sync failed: {e}'
+                    f'TL updated, but Google Drive/Sheet sync failed: {e}'
                 )
 
             return redirect(
@@ -1024,20 +1136,14 @@ def excel_upload(request):
 
     if request.method == 'POST':
 
-        excel_file = request.FILES.get(
-            'excel_file'
-        )
+        excel_file = request.FILES.get('excel_file')
 
         if not excel_file:
-
             messages.error(
                 request,
                 'Please select an Excel file.'
             )
-
-            return redirect(
-                'excel_upload'
-            )
+            return redirect('excel_upload')
 
         try:
 
@@ -1049,6 +1155,7 @@ def excel_upload(request):
             sheet = workbook.active
 
             count = 0
+            sheet_errors = []
 
             for row in sheet.iter_rows(
                 min_row=2,
@@ -1060,165 +1167,99 @@ def excel_upload(request):
 
                 row = list(row)
 
-                # ------------------------------------------------
-                # MINIMUM 12 COLUMNS
-                # ------------------------------------------------
-
                 while len(row) < 12:
-
                     row.append(None)
 
-                # ------------------------------------------------
-                # EXCEL FORMAT
-                # ------------------------------------------------
-
                 sno = row[0]
-
                 tl_no = row[1]
-
                 received_date = row[2]
-
                 sender_name = row[3]
-
                 letter_no_date = row[4]
-
                 subject = row[5]
-
                 section_name = row[6]
-
                 description = row[7]
-
-                # IMPORTANT
                 current_situation = row[8]
-
-                # IMPORTANT
                 current_status = row[9]
 
-                # ------------------------------------------------
-                # TL NO REQUIRED
-                # ------------------------------------------------
-
                 if not tl_no:
-
                     continue
-
-                # ------------------------------------------------
-                # S.NO
-                # ------------------------------------------------
 
                 try:
-
                     sno = int(sno)
-
-                except (
-                    TypeError,
-                    ValueError
-                ):
-
+                except (TypeError, ValueError):
                     continue
 
-                # ------------------------------------------------
-                # DATE
-                # ------------------------------------------------
-
-                if isinstance(
-                    received_date,
-                    datetime
-                ):
-
-                    received_date = (
-                        received_date.date()
-                    )
-
-                # ------------------------------------------------
-                # STATUS
-                # ------------------------------------------------
+                if isinstance(received_date, datetime):
+                    received_date = received_date.date()
 
                 current_status = str(
                     current_status or ''
                 ).strip()
 
                 if current_status not in [
-
                     'Pending',
-
                     'Disposed'
-
                 ]:
-
                     current_status = 'Pending'
 
-                # ------------------------------------------------
-                # CREATE RECORD
-                # ------------------------------------------------
-
-                TimeLimit.objects.create(
-
+                record = TimeLimit.objects.create(
                     sno=sno,
-
-                    tl_no=str(
-                        tl_no
-                    ).strip(),
-
+                    tl_no=str(tl_no).strip(),
                     received_date=received_date,
-
                     sender_name=str(
                         sender_name or ''
                     ).strip(),
-
                     letter_no_date=str(
                         letter_no_date or ''
                     ).strip(),
-
                     subject=str(
                         subject or ''
                     ).strip(),
-
                     section_name=str(
                         section_name or ''
                     ).strip(),
-
                     description=str(
                         description or ''
                     ).strip(),
-
                     current_situation=str(
                         current_situation or ''
                     ).strip(),
-
                     current_status=current_status,
-
                 )
+
+                try:
+                    save_record_to_sheet(record)
+                except Exception as e:
+                    sheet_errors.append(
+                        f'{record.tl_no}: {e}'
+                    )
 
                 count += 1
 
             messages.success(
-
                 request,
-
                 f'{count} TL records imported successfully.'
-
             )
+
+            if sheet_errors:
+                messages.warning(
+                    request,
+                    f'{len(sheet_errors)} records could not be synced to Google Sheet.'
+                )
 
         except Exception as e:
 
             messages.error(
-
                 request,
-
                 f'Excel upload error: {e}'
-
             )
 
-        return redirect(
-            'tl_records'
-        )
+        return redirect('tl_records')
 
     return render(
         request,
         'timeLimit/excel_upload.html'
     )
-
 
 # ============================================================
 # PDF FONTS - MANGAL + ARIAL UNICODE

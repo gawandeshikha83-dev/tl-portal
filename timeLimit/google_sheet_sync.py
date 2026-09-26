@@ -1,10 +1,12 @@
 import gspread
+import os
+
 
 from datetime import datetime
 
-from google.oauth2.service_account import Credentials
-
-from django.conf import settings
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 
 from .models import TimeLimit
 
@@ -17,10 +19,20 @@ SPREADSHEET_ID = (
     "1tcbuKvziM14fRZLrvgYZtSoVDDrW82DirWWSX2xaGW4"
 )
 
-CREDENTIALS_FILE = (
-    settings.BASE_DIR
-    / "credentials"
-    / "service-account.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+CLIENT_FILE = os.path.join(
+    BASE_DIR,
+    "..",
+    "credentials",
+    "oauth_client.json"
+)
+
+TOKEN_FILE = os.path.join(
+    BASE_DIR,
+    "..",
+    "credentials",
+    "sheet_token.json"
 )
 
 SCOPES = [
@@ -30,50 +42,61 @@ SCOPES = [
 
 
 HEADERS = [
-
     "स.क्र.",
-
     "TL No.",
-
     "प्राप्ति दिनांक",
-
     "प्रेषक",
-
     "क्र/दिनांक",
-
     "विषय",
-
     "संबंधित शाखा का नाम",
-
     "विवरण",
-
     "वर्तमान स्थिति",
-
     "स्थिति",
-
     "TL PDF",
-
     "Answer PDF",
-
 ]
 
 
 # ============================================================
-# GET GOOGLE WORKSHEET
+# GOOGLE WORKSHEET
 # ============================================================
 
 def get_worksheet():
 
-    credentials = (
-        Credentials
-        .from_service_account_file(
-            str(CREDENTIALS_FILE),
-            scopes=SCOPES
+    creds = None
+
+    if os.path.exists(TOKEN_FILE):
+
+        creds = Credentials.from_authorized_user_file(
+            TOKEN_FILE,
+            SCOPES
         )
-    )
+
+    if not creds or not creds.valid:
+
+        if creds and creds.expired and creds.refresh_token:
+
+            creds.refresh(Request())
+
+        else:
+
+            flow = InstalledAppFlow.from_client_secrets_file(
+                CLIENT_FILE,
+                SCOPES
+            )
+
+            creds = flow.run_local_server(
+                port=0
+            )
+
+        with open(TOKEN_FILE, "w") as token:
+
+            token.write(
+                creds.to_json()
+            )
 
     client = gspread.authorize(
-        credentials
+        creds
     )
 
     spreadsheet = client.open_by_key(
@@ -86,38 +109,38 @@ def get_worksheet():
 
 
 # ============================================================
-# ENSURE HEADER
+# ENSURE HEADERS
 # ============================================================
 
 def ensure_headers(worksheet):
 
     current_headers = worksheet.row_values(1)
 
-    if current_headers != HEADERS:
+    if not current_headers:
+        worksheet.update(
+            "A1:L1",
+            [HEADERS]
+        )
 
-        if not current_headers:
+    elif current_headers != HEADERS:
 
-            worksheet.update(
-                "A1:L1",
-                [HEADERS]
-            )
+        worksheet.update(
+            "A1:L1",
+            [HEADERS]
+        )
 
 
 # ============================================================
-# FORMAT DATE
+# DATE FORMAT
 # ============================================================
 
 def format_date(value):
 
     if not value:
-
         return ""
 
     if hasattr(value, "strftime"):
-
-        return value.strftime(
-            "%d-%m-%Y"
-        )
+        return value.strftime("%d-%m-%Y")
 
     return str(value)
 
@@ -152,13 +175,12 @@ def record_to_row(record):
 
         record.current_status or "Pending",
 
-        record.tl_pdf.url
-        if record.tl_pdf
-        else "",
-
-        record.answer_pdf.url
-        if record.answer_pdf
-        else "",
+      record.tl_pdf_drive_url or (
+    record.tl_pdf.url if record.tl_pdf else ""
+),
+record.answer_pdf_drive_url or (
+    record.answer_pdf.url if record.answer_pdf else ""
+),
 
     ]
 
@@ -172,9 +194,14 @@ def find_row_by_tl_no(
     tl_no
 ):
 
-    values = worksheet.col_values(2)
+    target = str(
+        tl_no or ""
+    ).strip()
 
-    target = str(tl_no).strip()
+    if not target:
+        return None
+
+    values = worksheet.col_values(2)
 
     for row_number, value in enumerate(
         values,
@@ -185,14 +212,13 @@ def find_row_by_tl_no(
             continue
 
         if str(value).strip() == target:
-
             return row_number
 
     return None
 
 
 # ============================================================
-# SAVE PORTAL RECORD → GOOGLE SHEET
+# PORTAL → GOOGLE SHEET
 # ============================================================
 
 def save_record_to_sheet(record):
@@ -216,7 +242,8 @@ def save_record_to_sheet(record):
 
         worksheet.update(
             f"A{existing_row}:L{existing_row}",
-            [row_data]
+            [row_data],
+            value_input_option="USER_ENTERED"
         )
 
     else:
@@ -228,7 +255,7 @@ def save_record_to_sheet(record):
 
 
 # ============================================================
-# DELETE PORTAL RECORD → GOOGLE SHEET
+# DELETE FROM GOOGLE SHEET
 # ============================================================
 
 def delete_record_from_sheet(
@@ -250,29 +277,25 @@ def delete_record_from_sheet(
 
 
 # ============================================================
-# PARSE GOOGLE SHEET DATE
+# PARSE DATE
 # ============================================================
 
 def parse_date(value):
 
     if not value:
-
         return None
 
     if hasattr(value, "date"):
-
         return value.date()
 
-    value = str(value).strip()
+    value = str(
+        value
+    ).strip()
 
     formats = [
-
         "%d-%m-%Y",
-
         "%d/%m/%Y",
-
         "%Y-%m-%d",
-
     ]
 
     for date_format in formats:
@@ -285,10 +308,29 @@ def parse_date(value):
             ).date()
 
         except ValueError:
-
             continue
 
     return None
+
+
+# ============================================================
+# SAFE INTEGER
+# ============================================================
+
+def safe_int(value):
+
+    try:
+
+        return int(
+            float(value)
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return 0
 
 
 # ============================================================
@@ -306,29 +348,47 @@ def sync_sheet_to_portal():
     rows = worksheet.get_all_records()
 
     imported = 0
-
     updated = 0
 
     for row in rows:
 
+        # ----------------------------------------------------
+        # TL NO
+        # ----------------------------------------------------
+
         tl_no = str(
-            row.get("TL No.", "")
+            row.get(
+                "TL No.",
+                ""
+            )
         ).strip()
 
         if not tl_no:
-
             continue
 
+        # ----------------------------------------------------
+        # DATE
+        # ----------------------------------------------------
+
         received_date = parse_date(
-            row.get("प्राप्ति दिनांक", "")
+            row.get(
+                "प्राप्ति दिनांक",
+                ""
+            )
         )
 
         if not received_date:
-
             continue
 
+        # ----------------------------------------------------
+        # STATUS
+        # ----------------------------------------------------
+
         status = str(
-            row.get("स्थिति", "Pending")
+            row.get(
+                "स्थिति",
+                "Pending"
+            )
         ).strip()
 
         if status not in [
@@ -338,18 +398,17 @@ def sync_sheet_to_portal():
 
             status = "Pending"
 
-        current_situation = str(
-            row.get(
-                "वर्तमान स्थिति",
-                ""
-            )
-        ).strip()
+        # ----------------------------------------------------
+        # DATA
+        # ----------------------------------------------------
 
         defaults = {
 
-            "sno": int(
-                row.get("स.क्र.", 0)
-                or 0
+            "sno": safe_int(
+                row.get(
+                    "स.क्र.",
+                    0
+                )
             ),
 
             "received_date":
@@ -390,17 +449,33 @@ def sync_sheet_to_portal():
                 )
             ).strip(),
 
-            "current_situation":
-                current_situation,
+            "current_situation": str(
+                row.get(
+                    "वर्तमान स्थिति",
+                    ""
+                )
+            ).strip(),
 
             "current_status":
                 status,
 
         }
 
-        record = TimeLimit.objects.filter(
-            tl_no=tl_no
-        ).first()
+        # ----------------------------------------------------
+        # EXISTING RECORD
+        # ----------------------------------------------------
+
+        record = (
+            TimeLimit.objects
+            .filter(
+                tl_no=tl_no
+            )
+            .first()
+        )
+
+        # ----------------------------------------------------
+        # UPDATE
+        # ----------------------------------------------------
 
         if record:
 
@@ -426,6 +501,10 @@ def sync_sheet_to_portal():
                 record.save()
 
                 updated += 1
+
+        # ----------------------------------------------------
+        # CREATE
+        # ----------------------------------------------------
 
         else:
 

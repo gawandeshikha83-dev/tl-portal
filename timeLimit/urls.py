@@ -14,7 +14,6 @@ from .views import (
     pdf_download,
     serve_pdf,
 )
-
 urlpatterns = [
 
     path(
