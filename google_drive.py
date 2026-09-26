@@ -1,8 +1,9 @@
 import os
+import json
+import io
 
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
@@ -11,51 +12,44 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-CLIENT_FILE = os.path.join(
-    BASE_DIR,
-    "credentials",
-    "oauth_client.json"
-)
-
-TOKEN_FILE = os.path.join(
-    BASE_DIR,
-    "credentials",
-    "token.json"
-)
-
-
 # Google Drive folders
 TL_PDF_FOLDER_ID = "1Q1E_PxdPTOPwIm6i10fVtwWRaZdbcRe1"
 ANSWER_PDF_FOLDER_ID = "1xQRodxwqAwRu1ILnlM_INKmYaiDrTiuM"
 
 
-def get_drive_service():
+def get_credentials():
 
-    creds = None
+    google_credentials = os.environ.get("GOOGLE_CREDENTIALS")
 
-    if os.path.exists(TOKEN_FILE):
-        creds = Credentials.from_authorized_user_file(
-            TOKEN_FILE,
+    if not google_credentials:
+        raise FileNotFoundError(
+            "GOOGLE_CREDENTIALS environment variable is missing."
+        )
+
+    data = json.loads(google_credentials)
+
+    # Support either a token JSON directly or a credentials wrapper
+    if "token" in data and "refresh_token" in data:
+
+        creds = Credentials.from_authorized_user_info(
+            data,
             SCOPES
         )
 
-    if not creds or not creds.valid:
+    else:
+        raise ValueError(
+            "GOOGLE_CREDENTIALS does not contain a valid OAuth token."
+        )
 
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+    if creds.expired and creds.refresh_token:
+        creds.refresh(Request())
 
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                CLIENT_FILE,
-                SCOPES
-            )
+    return creds
 
-            creds = flow.run_local_server(port=0)
 
-        with open(TOKEN_FILE, "w") as token:
-            token.write(creds.to_json())
+def get_drive_service():
+
+    creds = get_credentials()
 
     return build(
         "drive",

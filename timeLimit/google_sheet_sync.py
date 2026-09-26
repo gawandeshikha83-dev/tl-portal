@@ -1,11 +1,10 @@
 import gspread
 import os
-
+import json
 
 from datetime import datetime
 
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 from .models import TimeLimit
@@ -17,22 +16,6 @@ from .models import TimeLimit
 
 SPREADSHEET_ID = (
     "1tcbuKvziM14fRZLrvgYZtSoVDDrW82DirWWSX2xaGW4"
-)
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-CLIENT_FILE = os.path.join(
-    BASE_DIR,
-    "..",
-    "credentials",
-    "oauth_client.json"
-)
-
-TOKEN_FILE = os.path.join(
-    BASE_DIR,
-    "..",
-    "credentials",
-    "sheet_token.json"
 )
 
 SCOPES = [
@@ -58,42 +41,49 @@ HEADERS = [
 
 
 # ============================================================
+# GOOGLE CREDENTIALS
+# ============================================================
+
+def get_credentials():
+
+    google_credentials = os.environ.get(
+        "GOOGLE_CREDENTIALS"
+    )
+
+    if not google_credentials:
+        raise FileNotFoundError(
+            "GOOGLE_CREDENTIALS environment variable is missing."
+        )
+
+    data = json.loads(
+        google_credentials
+    )
+
+    if "token" not in data or "refresh_token" not in data:
+        raise ValueError(
+            "GOOGLE_CREDENTIALS does not contain a valid OAuth token."
+        )
+
+    creds = Credentials.from_authorized_user_info(
+        data,
+        SCOPES
+    )
+
+    if creds.expired and creds.refresh_token:
+        creds.refresh(
+            Request()
+        )
+
+    return creds
+
+
+# ============================================================
 # GOOGLE WORKSHEET
 # ============================================================
 
 def get_worksheet():
 
-    creds = None
-
-    if os.path.exists(TOKEN_FILE):
-
-        creds = Credentials.from_authorized_user_file(
-            TOKEN_FILE,
-            SCOPES
-        )
-
-    if not creds or not creds.valid:
-
-        if creds and creds.expired and creds.refresh_token:
-
-            creds.refresh(Request())
-
-        else:
-
-            flow = InstalledAppFlow.from_client_secrets_file(
-                CLIENT_FILE,
-                SCOPES
-            )
-
-            creds = flow.run_local_server(
-                port=0
-            )
-
-        with open(TOKEN_FILE, "w") as token:
-
-            token.write(
-                creds.to_json()
-            )
+    creds = get_credentials()
 
     client = gspread.authorize(
         creds
@@ -117,6 +107,7 @@ def ensure_headers(worksheet):
     current_headers = worksheet.row_values(1)
 
     if not current_headers:
+
         worksheet.update(
             "A1:L1",
             [HEADERS]
@@ -140,7 +131,10 @@ def format_date(value):
         return ""
 
     if hasattr(value, "strftime"):
-        return value.strftime("%d-%m-%Y")
+
+        return value.strftime(
+            "%d-%m-%Y"
+        )
 
     return str(value)
 
@@ -155,7 +149,9 @@ def record_to_row(record):
 
         record.sno or "",
 
-        str(record.tl_no or ""),
+        str(
+            record.tl_no or ""
+        ),
 
         format_date(
             record.received_date
@@ -175,12 +171,17 @@ def record_to_row(record):
 
         record.current_status or "Pending",
 
-      record.tl_pdf_drive_url or (
-    record.tl_pdf.url if record.tl_pdf else ""
-),
-record.answer_pdf_drive_url or (
-    record.answer_pdf.url if record.answer_pdf else ""
-),
+        record.tl_pdf_drive_url or (
+            record.tl_pdf.url
+            if record.tl_pdf
+            else ""
+        ),
+
+        record.answer_pdf_drive_url or (
+            record.answer_pdf.url
+            if record.answer_pdf
+            else ""
+        ),
 
     ]
 
@@ -212,6 +213,7 @@ def find_row_by_tl_no(
             continue
 
         if str(value).strip() == target:
+
             return row_number
 
     return None
@@ -286,6 +288,7 @@ def parse_date(value):
         return None
 
     if hasattr(value, "date"):
+
         return value.date()
 
     value = str(
@@ -308,6 +311,7 @@ def parse_date(value):
             ).date()
 
         except ValueError:
+
             continue
 
     return None
