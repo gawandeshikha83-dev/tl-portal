@@ -227,7 +227,7 @@ def find_row_by_tl_no(
 # PORTAL → GOOGLE SHEET
 # ============================================================
 
-def save_record_to_sheet(record):
+def save_record_to_sheet(record, old_tl_no=None):
 
     worksheet = get_worksheet()
 
@@ -239,10 +239,24 @@ def save_record_to_sheet(record):
         record
     )
 
+    # --------------------------------------------------------
+    # FIND EXISTING ROW
+    # --------------------------------------------------------
+
+    search_tl_no = (
+        old_tl_no
+        if old_tl_no
+        else record.tl_no
+    )
+
     existing_row = find_row_by_tl_no(
         worksheet,
-        record.tl_no
+        search_tl_no
     )
+
+    # --------------------------------------------------------
+    # UPDATE EXISTING ROW
+    # --------------------------------------------------------
 
     if existing_row:
 
@@ -252,13 +266,16 @@ def save_record_to_sheet(record):
             value_input_option="USER_ENTERED"
         )
 
+    # --------------------------------------------------------
+    # ADD NEW ROW
+    # --------------------------------------------------------
+
     else:
 
         worksheet.append_row(
             row_data,
             value_input_option="USER_ENTERED"
         )
-
 
 # ============================================================
 # DELETE FROM GOOGLE SHEET

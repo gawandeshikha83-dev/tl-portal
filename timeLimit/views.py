@@ -633,7 +633,10 @@ def add_tl(request):
                 # GOOGLE SHEET
                 # =========================
 
-                save_record_to_sheet(record)
+                save_record_to_sheet(
+    			record
+		
+		)
 
 
                 messages.success(
@@ -671,6 +674,8 @@ def add_tl(request):
             'title': 'Add New TL'
         }
     )
+
+
 # ============================================================
 # EDIT TL
 # ============================================================
@@ -683,6 +688,8 @@ def edit_tl(request, pk):
     )
 
     if request.method == 'POST':
+
+        old_tl_no = record.tl_no
 
         form = TimeLimitForm(
             request.POST,
@@ -739,7 +746,10 @@ def edit_tl(request, pk):
                 # -----------------------------
                 # Update Google Sheet
                 # -----------------------------
-                save_record_to_sheet(record)
+                save_record_to_sheet(
+    record,
+    old_tl_no=old_tl_no
+)
 
                 messages.success(
                     request,
