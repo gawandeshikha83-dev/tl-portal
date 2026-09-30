@@ -3,6 +3,9 @@ from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, FileResponse, Http404
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
 
 from .models import TimeLimit
 from .forms import TimeLimitForm
@@ -39,6 +42,67 @@ from reportlab.pdfbase.ttfonts import TTFont
 from html import escape
 from datetime import datetime
 
+# ============================================================
+# EMPLOYEE LOGIN
+# ============================================================
+
+def employee_login(request):
+
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+
+        form = AuthenticationForm(
+            request,
+            data=request.POST
+        )
+
+        if form.is_valid():
+
+            user = form.get_user()
+
+            # Admin/Staff cannot login from Employee Login
+            if user.is_staff:
+                messages.error(
+                    request,
+                    'Please use Admin Login.'
+                )
+
+            else:
+                login(
+                    request,
+                    user
+                )
+
+                return redirect(
+                    'dashboard'
+                )
+
+    else:
+
+        form = AuthenticationForm()
+
+    return render(
+        request,
+        'timeLimit/employee_login.html',
+        {
+            'form': form
+        }
+    )
+
+
+# ============================================================
+# EMPLOYEE LOGOUT
+# ============================================================
+
+def employee_logout(request):
+
+    logout(request)
+
+    return redirect(
+        'employee_login'
+    )
 
 # ============================================================
 # DASHBOARD

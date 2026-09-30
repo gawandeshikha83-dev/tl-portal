@@ -2,6 +2,8 @@ from django.urls import path
 
 from .views import (
     dashboard,
+    employee_login,
+    employee_logout,
     tl_records,
     add_tl,
     edit_tl,
@@ -14,12 +16,25 @@ from .views import (
     pdf_download,
     serve_pdf,
 )
+
 urlpatterns = [
 
     path(
         '',
         dashboard,
         name='dashboard'
+    ),
+
+    path(
+        'login/',
+        employee_login,
+        name='employee_login'
+    ),
+
+    path(
+        'logout/',
+        employee_logout,
+        name='employee_logout'
     ),
 
     path(
@@ -81,9 +96,10 @@ urlpatterns = [
         pdf_download,
         name='pdf_download'
     ),
-path(
-    'tl-records/<int:pk>/pdf/<str:file_type>/',
-    serve_pdf,
-    name='serve_pdf'
-),
+
+    path(
+        'tl-records/<int:pk>/pdf/<str:file_type>/',
+        serve_pdf,
+        name='serve_pdf'
+    ),
 ]
