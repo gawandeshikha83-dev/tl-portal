@@ -1016,31 +1016,21 @@
 
                     <div class="detail-row">
 
-                        <div class="label">
-                            वर्तमान स्थिति
-                        </div>
+    <div class="label">
+        वर्तमान स्थिति
+    </div>
 
-                        <div class="value">
+    <div class="value description-box">
 
-                            {% if record.current_status == "Pending" %}
+        {% if record.current_situation %}
+            {{ record.current_situation|linebreaksbr }}
+        {% else %}
+            -
+        {% endif %}
 
-                                <span class="status pending">
-                                    Pending
-                                </span>
+    </div>
 
-                            {% else %}
-
-                                <span class="status disposed">
-                                    Disposed
-                                </span>
-
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-
-
+</div>
                 </div>
 
 
