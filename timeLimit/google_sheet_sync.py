@@ -55,12 +55,14 @@ def get_credentials():
             "GOOGLE_CREDENTIALS environment variable is missing."
         )
 
-       data = json.loads(
+    data = json.loads(
         google_credentials
     )
 
     if isinstance(data, str):
-        data = json.loads(data)
+            data = json.loads(
+        google_credentials
+    )
 
     if "token" not in data or "refresh_token" not in data:
         raise ValueError(
@@ -78,7 +80,6 @@ def get_credentials():
         )
 
     return creds
-
 
 # ============================================================
 # GOOGLE WORKSHEET
