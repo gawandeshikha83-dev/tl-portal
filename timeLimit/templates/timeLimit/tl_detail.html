@@ -1039,28 +1039,28 @@
                 <div class="documents">
 
 
-                    {% if record.tl_pdf %}
+                    {% if record.tl_pdf_drive_url %}
+<a
+    href="{{ record.tl_pdf_drive_url }}"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="document-link tl"
+>
+    📄 TL PDF
+</a>
+{% endif %}
 
-                        <a
-                            href="{% url 'serve_pdf' record.pk 'tl' %}"
-                            class="document-link tl"
-                        >
-                            📄 TL PDF
-                        </a>
 
-                    {% endif %}
-
-
-                    {% if record.answer_pdf %}
-
-                        <a
-                            href="{% url 'serve_pdf' record.pk 'answer' %}"
-                            class="document-link answer"
-                        >
-                            📑 Answer PDF
-                        </a>
-
-                    {% endif %}
+                    {% if record.answer_pdf_drive_url %}
+<a
+    href="{{ record.answer_pdf_drive_url }}"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="document-link answer"
+>
+    📑 Answer PDF
+</a>
+{% endif %}
 
 
                     {% if not record.tl_pdf and not record.answer_pdf %}
@@ -1131,35 +1131,29 @@
 
                 <!-- SIMPLE PDF VIEWER -->
 
-                <div class="pdf-viewer">
+                {% if record.tl_pdf_drive_url %}
 
+<iframe
+    id="pdfViewer"
+    src="{{ record.tl_pdf_drive_url }}"
+    title="TL PDF Preview">
+</iframe>
 
-                    {% if record.tl_pdf %}
+{% elif record.answer_pdf_drive_url %}
 
-                        <iframe
-                            id="pdfViewer"
-                            src="{% url 'serve_pdf' record.pk 'tl' %}"
-                            title="TL PDF Preview"
-                        ></iframe>
+<iframe
+    id="pdfViewer"
+    src="{{ record.answer_pdf_drive_url }}"
+    title="Answer PDF Preview"
+></iframe>
 
+{% else %}
 
-                    {% elif record.answer_pdf %}
+<div class="pdf-empty">
+    इस TL के लिए कोई PDF उपलब्ध नहीं है।
+</div>
 
-                        <iframe
-                            id="pdfViewer"
-                            src="{% url 'serve_pdf' record.pk 'answer' %}"
-                            title="Answer PDF Preview"
-                        ></iframe>
-
-
-                    {% else %}
-
-                        <div class="pdf-empty">
-                            इस TL के लिए कोई PDF उपलब्ध नहीं है।
-                        </div>
-
-                    {% endif %}
-
+{% endif %}
 
                 </div>
 
@@ -1271,53 +1265,20 @@ function toggleSidebar() {
 ========================= */
 
 function showTL() {
-
-    const viewer =
-        document.getElementById("pdfViewer");
+    const viewer = document.getElementById("pdfViewer");
 
     if (viewer) {
-
-        viewer.src =
-            "{% url 'serve_pdf' record.pk 'tl' %}";
-
+        viewer.src = "{{ record.tl_pdf_drive_url|default:'' }}";
     }
-
-
-    const tlButton =
-        document.getElementById("tlButton");
-
-    const answerButton =
-        document.getElementById("answerButton");
-
-
-    if (tlButton) {
-
-        tlButton.classList.add("active");
-
-    }
-
-
-    if (answerButton) {
-
-        answerButton.classList.remove("active");
-
-    }
-
 }
 
-
 function showAnswer() {
-
-    const viewer =
-        document.getElementById("pdfViewer");
+    const viewer = document.getElementById("pdfViewer");
 
     if (viewer) {
-
-        viewer.src =
-            "{% url 'serve_pdf' record.pk 'answer' %}";
-
+        viewer.src = "{{ record.answer_pdf_drive_url|default:'' }}";
     }
-
+}
 
     const tlButton =
         document.getElementById("tlButton");

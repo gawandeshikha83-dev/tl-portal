@@ -1973,8 +1973,11 @@ def pdf_download(request):
 
 
 # ============================================================
-# SERVE PDF / PDF PREVIEW
+# SERVE PDF / GOOGLE DRIVE PDF PREVIEW
 # ============================================================
+
+import re
+
 
 def serve_pdf(
     request,
@@ -1988,24 +1991,16 @@ def serve_pdf(
     )
 
     # --------------------------------------------------------
-    # TL PDF
+    # SELECT DRIVE URL
     # --------------------------------------------------------
 
     if file_type == 'tl':
 
-        pdf_file = record.tl_pdf
-
-    # --------------------------------------------------------
-    # ANSWER PDF
-    # --------------------------------------------------------
+        drive_url = record.tl_pdf_drive_url
 
     elif file_type == 'answer':
 
-        pdf_file = record.answer_pdf
-
-    # --------------------------------------------------------
-    # INVALID TYPE
-    # --------------------------------------------------------
+        drive_url = record.answer_pdf_drive_url
 
     else:
 
@@ -2014,43 +2009,37 @@ def serve_pdf(
         )
 
     # --------------------------------------------------------
-    # FILE NOT FOUND
+    # CHECK URL
     # --------------------------------------------------------
 
-    if not pdf_file:
+    if not drive_url:
 
         raise Http404(
-            'PDF not found'
+            'Google Drive PDF link not found'
         )
 
     # --------------------------------------------------------
-    # OPEN PDF
+    # EXTRACT GOOGLE DRIVE FILE ID
     # --------------------------------------------------------
 
-    try:
+    match = re.search(
+        r'/d/([^/]+)',
+        drive_url
+    )
 
-        pdf_file.open('rb')
+    if match:
 
-        response = FileResponse(
+        file_id = match.group(1)
 
-            pdf_file,
-
-            content_type='application/pdf'
-
+        preview_url = (
+            f'https://drive.google.com/file/d/'
+            f'{file_id}/preview'
         )
 
-        response[
-            'Content-Disposition'
-        ] = 'inline'
+        return redirect(preview_url)
 
-        response[
-            'X-Frame-Options'
-        ] = 'SAMEORIGIN'
+    # --------------------------------------------------------
+    # FALLBACK
+    # --------------------------------------------------------
 
-        return response
-
-    except Exception:
-
-        raise Http404(
-            'Unable to open PDF'
-        )
+    return redirect(drive_url)
