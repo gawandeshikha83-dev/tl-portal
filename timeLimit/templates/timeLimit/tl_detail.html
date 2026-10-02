@@ -708,13 +708,9 @@ function getDrivePreviewUrl(url) {
             }
 
             if (fileId) {
-                const driveUrl =
-                    "https://drive.google.com/file/d/" +
+                return "https://drive.google.com/file/d/" +
                     encodeURIComponent(fileId) +
-                    "/view";
-
-                return "https://docs.google.com/gview?embedded=1&url=" +
-                    encodeURIComponent(driveUrl);
+                    "/preview";
             }
         }
 
@@ -724,7 +720,6 @@ function getDrivePreviewUrl(url) {
 
     return url;
 }
-
 /* Load selected PDF into the right-side preview */
 function loadPDF(url, selectedButton) {
     const viewer = document.getElementById("pdfViewer");
