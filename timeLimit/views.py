@@ -1,3 +1,4 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
@@ -9,11 +10,13 @@ from django.contrib.auth.forms import AuthenticationForm
 
 from .models import TimeLimit
 from .forms import TimeLimitForm
+
 from .google_sheet_sync import (
     save_record_to_sheet,
     delete_record_from_sheet,
     sync_sheet_to_portal,
 )
+
 from .google_drive import (
     upload_file_to_drive,
     TL_PDF_FOLDER_ID,
@@ -30,17 +33,19 @@ from reportlab.platypus import (
     Table,
     TableStyle,
     Paragraph,
-    Spacer
+    Spacer,
 )
 from reportlab.lib.styles import (
     getSampleStyleSheet,
-    ParagraphStyle
+    ParagraphStyle,
 )
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 from html import escape
 from datetime import datetime
+import re
+
 
 # ============================================================
 # EMPLOYEE LOGIN
@@ -62,14 +67,15 @@ def employee_login(request):
 
             user = form.get_user()
 
-            # Admin/Staff cannot login from Employee Login
             if user.is_staff:
+
                 messages.error(
                     request,
                     'Please use Admin Login.'
                 )
 
             else:
+
                 login(
                     request,
                     user
@@ -103,6 +109,7 @@ def employee_logout(request):
     return redirect(
         'employee_login'
     )
+
 
 # ============================================================
 # DASHBOARD
@@ -650,7 +657,10 @@ def add_tl(request):
 
                 if record.tl_pdf:
 
-                    with open(record.tl_pdf.path, "rb") as pdf_file:
+                    with open(
+                        record.tl_pdf.path,
+                        "rb"
+                    ) as pdf_file:
 
                         uploaded_file = upload_file_to_drive(
                             pdf_file,
@@ -664,14 +674,16 @@ def add_tl(request):
                         or ""
                     )
 
-
                 # =========================
                 # ANSWER PDF → GOOGLE DRIVE
                 # =========================
 
                 if record.answer_pdf:
 
-                    with open(record.answer_pdf.path, "rb") as pdf_file:
+                    with open(
+                        record.answer_pdf.path,
+                        "rb"
+                    ) as pdf_file:
 
                         uploaded_file = upload_file_to_drive(
                             pdf_file,
@@ -685,29 +697,24 @@ def add_tl(request):
                         or ""
                     )
 
-
                 # =========================
                 # SAVE DRIVE LINKS
                 # =========================
 
                 record.save()
 
-
                 # =========================
                 # GOOGLE SHEET
                 # =========================
 
                 save_record_to_sheet(
-    			record
-		
-		)
-
+                    record
+                )
 
                 messages.success(
                     request,
                     'TL Record successfully added, PDFs uploaded to Google Drive and Google Sheet updated.'
                 )
-
 
             except Exception as e:
 
@@ -721,14 +728,13 @@ def add_tl(request):
                     f'TL added, but Google Drive/Sheet sync failed: {e}'
                 )
 
-
-            return redirect('tl_records')
-
+            return redirect(
+                'tl_records'
+            )
 
     else:
 
         form = TimeLimitForm()
-
 
     return render(
         request,
@@ -768,11 +774,14 @@ def edit_tl(request, pk):
             try:
 
                 # -----------------------------
-                # Upload NEW TL PDF to Google Drive
+                # Upload NEW TL PDF
                 # -----------------------------
+
                 if 'tl_pdf' in request.FILES:
 
-                    with record.tl_pdf.open('rb') as pdf_file:
+                    with record.tl_pdf.open(
+                        'rb'
+                    ) as pdf_file:
 
                         uploaded_file = upload_file_to_drive(
                             pdf_file,
@@ -781,17 +790,20 @@ def edit_tl(request, pk):
                         )
 
                     record.tl_pdf_drive_url = (
-                        uploaded_file.get('webViewLink')
-                        or uploaded_file.get('webContentLink')
+                        uploaded_file.get("webViewLink")
+                        or uploaded_file.get("webContentLink")
                         or ''
                     )
 
                 # -----------------------------
-                # Upload NEW Answer PDF to Google Drive
+                # Upload NEW Answer PDF
                 # -----------------------------
+
                 if 'answer_pdf' in request.FILES:
 
-                    with record.answer_pdf.open('rb') as pdf_file:
+                    with record.answer_pdf.open(
+                        'rb'
+                    ) as pdf_file:
 
                         uploaded_file = upload_file_to_drive(
                             pdf_file,
@@ -800,20 +812,21 @@ def edit_tl(request, pk):
                         )
 
                     record.answer_pdf_drive_url = (
-                        uploaded_file.get('webViewLink')
-                        or uploaded_file.get('webContentLink')
+                        uploaded_file.get("webViewLink")
+                        or uploaded_file.get("webContentLink")
                         or ''
                     )
 
                 record.save()
 
                 # -----------------------------
-                # Update Google Sheet
+                # UPDATE GOOGLE SHEET
                 # -----------------------------
+
                 save_record_to_sheet(
-    record,
-    old_tl_no=old_tl_no
-)
+                    record,
+                    old_tl_no=old_tl_no
+                )
 
                 messages.success(
                     request,
@@ -866,7 +879,9 @@ def delete_tl(request, pk):
 
         try:
 
-            delete_record_from_sheet(tl_no)
+            delete_record_from_sheet(
+                tl_no
+            )
 
             messages.success(
                 request,
@@ -1004,10 +1019,6 @@ def excel_download(request):
 
     sheet.title = 'TL Records'
 
-    # --------------------------------------------------------
-    # HEADERS
-    # --------------------------------------------------------
-
     headers = [
 
         'स.क्र.',
@@ -1038,40 +1049,24 @@ def excel_download(request):
 
     sheet.append(headers)
 
-    # --------------------------------------------------------
-    # RECORDS
-    # --------------------------------------------------------
-
     for record in records:
 
         received_date = (
-
             record.received_date
-
             if record.received_date
-
             else ''
-
         )
 
         tl_pdf = (
-
             record.tl_pdf.url
-
             if record.tl_pdf
-
             else ''
-
         )
 
         answer_pdf = (
-
             record.answer_pdf.url
-
             if record.answer_pdf
-
             else ''
-
         )
 
         sheet.append([
@@ -1176,15 +1171,7 @@ def excel_download(request):
             column
         ].width = width
 
-    # --------------------------------------------------------
-    # FREEZE HEADER
-    # --------------------------------------------------------
-
     sheet.freeze_panes = 'A2'
-
-    # --------------------------------------------------------
-    # RESPONSE
-    # --------------------------------------------------------
 
     response = HttpResponse(
 
@@ -1210,14 +1197,20 @@ def excel_upload(request):
 
     if request.method == 'POST':
 
-        excel_file = request.FILES.get('excel_file')
+        excel_file = request.FILES.get(
+            'excel_file'
+        )
 
         if not excel_file:
+
             messages.error(
                 request,
                 'Please select an Excel file.'
             )
-            return redirect('excel_upload')
+
+            return redirect(
+                'excel_upload'
+            )
 
         try:
 
@@ -1229,6 +1222,7 @@ def excel_upload(request):
             sheet = workbook.active
 
             count = 0
+
             sheet_errors = []
 
             for row in sheet.iter_rows(
@@ -1259,12 +1253,24 @@ def excel_upload(request):
                     continue
 
                 try:
+
                     sno = int(sno)
-                except (TypeError, ValueError):
+
+                except (
+                    TypeError,
+                    ValueError
+                ):
+
                     continue
 
-                if isinstance(received_date, datetime):
-                    received_date = received_date.date()
+                if isinstance(
+                    received_date,
+                    datetime
+                ):
+
+                    received_date = (
+                        received_date.date()
+                    )
 
                 current_status = str(
                     current_status or ''
@@ -1274,36 +1280,55 @@ def excel_upload(request):
                     'Pending',
                     'Disposed'
                 ]:
+
                     current_status = 'Pending'
 
                 record = TimeLimit.objects.create(
+
                     sno=sno,
-                    tl_no=str(tl_no).strip(),
+
+                    tl_no=str(
+                        tl_no
+                    ).strip(),
+
                     received_date=received_date,
+
                     sender_name=str(
                         sender_name or ''
                     ).strip(),
+
                     letter_no_date=str(
                         letter_no_date or ''
                     ).strip(),
+
                     subject=str(
                         subject or ''
                     ).strip(),
+
                     section_name=str(
                         section_name or ''
                     ).strip(),
+
                     description=str(
                         description or ''
                     ).strip(),
+
                     current_situation=str(
                         current_situation or ''
                     ).strip(),
+
                     current_status=current_status,
+
                 )
 
                 try:
-                    save_record_to_sheet(record)
+
+                    save_record_to_sheet(
+                        record
+                    )
+
                 except Exception as e:
+
                     sheet_errors.append(
                         f'{record.tl_no}: {e}'
                     )
@@ -1316,6 +1341,7 @@ def excel_upload(request):
             )
 
             if sheet_errors:
+
                 messages.warning(
                     request,
                     f'{len(sheet_errors)} records could not be synced to Google Sheet.'
@@ -1328,12 +1354,15 @@ def excel_upload(request):
                 f'Excel upload error: {e}'
             )
 
-        return redirect('tl_records')
+        return redirect(
+            'tl_records'
+        )
 
     return render(
         request,
         'timeLimit/excel_upload.html'
     )
+
 
 # ============================================================
 # PDF FONTS - MANGAL + ARIAL UNICODE
@@ -1347,12 +1376,14 @@ def get_pdf_fonts():
     # MANGAL
     # --------------------------------------------------------
 
+    from pathlib import Path
+
+    BASE_DIR = Path(__file__).resolve().parent.parent
+
     mangal_paths = [
-
-        r"C:\Windows\Fonts\mangal.ttf",
-
-        r"C:\Windows\Fonts\MANGAL.TTF",
-
+        BASE_DIR / "timeLimit" / "mangal.ttf",
+        Path(r"C:\Windows\Fonts\mangal.ttf"),
+        Path(r"C:\Windows\Fonts\MANGAL.TTF"),
     ]
 
     mangal_loaded = False
@@ -1361,12 +1392,15 @@ def get_pdf_fonts():
 
         try:
 
-            if 'Mangal' not in pdfmetrics.getRegisteredFontNames():
+            if (
+                'Mangal'
+                not in pdfmetrics.getRegisteredFontNames()
+            ):
 
                 pdfmetrics.registerFont(
                     TTFont(
                         'Mangal',
-                        mangal_path
+                        str(mangal_path)
                     )
                 )
 
@@ -1507,16 +1541,12 @@ def pdf_download(request):
 
     styles = getSampleStyleSheet()
 
-    # --------------------------------------------------------
-    # FONTS
-    # --------------------------------------------------------
-
     fonts = get_pdf_fonts()
 
     font_name = fonts['main']
 
     # --------------------------------------------------------
-    # TITLE STYLE
+    # TITLE
     # --------------------------------------------------------
 
     title_style = ParagraphStyle(
@@ -1538,7 +1568,7 @@ def pdf_download(request):
     )
 
     # --------------------------------------------------------
-    # SUBTITLE STYLE
+    # SUBTITLE
     # --------------------------------------------------------
 
     subtitle_style = ParagraphStyle(
@@ -1564,7 +1594,7 @@ def pdf_download(request):
     )
 
     # --------------------------------------------------------
-    # BODY STYLE
+    # BODY
     # --------------------------------------------------------
 
     body_style = ParagraphStyle(
@@ -1586,7 +1616,7 @@ def pdf_download(request):
     )
 
     # --------------------------------------------------------
-    # HEADER STYLE
+    # HEADER
     # --------------------------------------------------------
 
     header_style = ParagraphStyle(
@@ -1608,10 +1638,6 @@ def pdf_download(request):
         wordWrap='CJK',
 
     )
-
-    # ========================================================
-    # HEADERS
-    # ========================================================
 
     headers = [
 
@@ -1639,10 +1665,6 @@ def pdf_download(request):
 
     table_data = []
 
-    # --------------------------------------------------------
-    # HEADER ROW
-    # --------------------------------------------------------
-
     table_data.append([
 
         Paragraph(
@@ -1657,9 +1679,9 @@ def pdf_download(request):
 
     ])
 
-    # ========================================================
+    # --------------------------------------------------------
     # RECORD DATA
-    # ========================================================
+    # --------------------------------------------------------
 
     for record in records:
 
@@ -1707,17 +1729,9 @@ def pdf_download(request):
                 record.description or ''
             ),
 
-            # -----------------------------------------------
-            # वर्तमान स्थिति
-            # -----------------------------------------------
-
             str(
                 record.current_situation or ''
             ),
-
-            # -----------------------------------------------
-            # स्थिति
-            # -----------------------------------------------
 
             str(
                 record.current_status or ''
@@ -1729,11 +1743,12 @@ def pdf_download(request):
 
         for value in values:
 
-            safe_value = escape(
-                value
-            ).replace(
-                '\n',
-                '<br/>'
+            safe_value = (
+                escape(value)
+                .replace(
+                    '\n',
+                    '<br/>'
+                )
             )
 
             row_data.append(
@@ -1752,37 +1767,33 @@ def pdf_download(request):
             row_data
         )
 
-    # ========================================================
+    # --------------------------------------------------------
     # COLUMN WIDTHS
-    # ========================================================
+    # --------------------------------------------------------
 
     col_widths = [
 
-        32,     # S.No
+        32,
 
-        58,     # TL No.
+        58,
 
-        68,     # Received Date
+        68,
 
-        82,     # Sender
+        82,
 
-        68,     # Kr/Date
+        68,
 
-        90,     # Subject
+        90,
 
-        88,     # Section
+        88,
 
-        135,    # Description
+        135,
 
-        130,    # Current Situation
+        130,
 
-        54,     # Status
+        54,
 
     ]
-
-    # ========================================================
-    # TABLE
-    # ========================================================
 
     table = Table(
 
@@ -1804,135 +1815,87 @@ def pdf_download(request):
 
             (
                 'BACKGROUND',
-
                 (0, 0),
-
                 (-1, 0),
-
                 colors.HexColor(
                     '#173f5f'
                 )
-
             ),
 
             (
                 'TEXTCOLOR',
-
                 (0, 0),
-
                 (-1, 0),
-
                 colors.white
-
             ),
 
             (
                 'GRID',
-
                 (0, 0),
-
                 (-1, -1),
-
                 0.35,
-
                 colors.HexColor(
                     '#94a3b8'
                 )
-
             ),
 
             (
                 'ALIGN',
-
                 (0, 0),
-
                 (-1, -1),
-
                 'CENTER'
-
             ),
 
             (
                 'VALIGN',
-
                 (0, 0),
-
                 (-1, -1),
-
                 'MIDDLE'
-
             ),
 
             (
                 'LEFTPADDING',
-
                 (0, 0),
-
                 (-1, -1),
-
                 3
-
             ),
 
             (
                 'RIGHTPADDING',
-
                 (0, 0),
-
                 (-1, -1),
-
                 3
-
             ),
 
             (
                 'TOPPADDING',
-
                 (0, 0),
-
                 (-1, -1),
-
                 4
-
             ),
 
             (
                 'BOTTOMPADDING',
-
                 (0, 0),
-
                 (-1, -1),
-
                 4
-
             ),
 
             (
                 'ROWBACKGROUNDS',
-
                 (0, 1),
-
                 (-1, -1),
-
                 [
-
                     colors.white,
-
                     colors.HexColor(
                         '#f8fafc'
                     )
-
                 ]
-
             ),
 
         ])
 
     )
-
-    # ========================================================
-    # STORY
-    # ========================================================
 
     story = [
 
@@ -1955,10 +1918,6 @@ def pdf_download(request):
 
     ]
 
-    # ========================================================
-    # BUILD
-    # ========================================================
-
     document.build(
 
         story,
@@ -1976,9 +1935,6 @@ def pdf_download(request):
 # SERVE PDF / GOOGLE DRIVE PDF PREVIEW
 # ============================================================
 
-import re
-
-
 def serve_pdf(
     request,
     pk,
@@ -1991,16 +1947,20 @@ def serve_pdf(
     )
 
     # --------------------------------------------------------
-    # SELECT DRIVE URL
+    # SELECT DRIVE URL + LOCAL FILE
     # --------------------------------------------------------
 
     if file_type == 'tl':
 
         drive_url = record.tl_pdf_drive_url
 
+        local_file = record.tl_pdf
+
     elif file_type == 'answer':
 
         drive_url = record.answer_pdf_drive_url
+
+        local_file = record.answer_pdf
 
     else:
 
@@ -2009,37 +1969,63 @@ def serve_pdf(
         )
 
     # --------------------------------------------------------
-    # CHECK URL
+    # 1. GOOGLE DRIVE PDF
     # --------------------------------------------------------
 
-    if not drive_url:
+    if drive_url:
 
-        raise Http404(
-            'Google Drive PDF link not found'
+        match = re.search(
+            r'/d/([^/]+)',
+            drive_url
+        )
+
+        if match:
+
+            file_id = match.group(1)
+
+            preview_url = (
+                f'https://drive.google.com/file/d/'
+                f'{file_id}/preview'
+            )
+
+            return redirect(
+                preview_url
+            )
+
+        return redirect(
+            drive_url
         )
 
     # --------------------------------------------------------
-    # EXTRACT GOOGLE DRIVE FILE ID
+    # 2. LOCAL PDF FALLBACK
     # --------------------------------------------------------
 
-    match = re.search(
-        r'/d/([^/]+)',
-        drive_url
+    if local_file:
+
+        try:
+
+            return redirect(
+                local_file.url
+            )
+
+        except Exception:
+
+            pass
+
+    # --------------------------------------------------------
+    # 3. PDF NOT FOUND
+    # --------------------------------------------------------
+
+    raise Http404(
+        'PDF not found for this TL record.'
     )
 
-    if match:
+# ============================================================
+# PDF.JS VIEWER
+# ============================================================
 
-        file_id = match.group(1)
-
-        preview_url = (
-            f'https://drive.google.com/file/d/'
-            f'{file_id}/preview'
-        )
-
-        return redirect(preview_url)
-
-    # --------------------------------------------------------
-    # FALLBACK
-    # --------------------------------------------------------
-
-    return redirect(drive_url)
+def pdf_viewer(request):
+    return render(
+        request,
+        'timeLimit/pdf_viewer.html'
+    )
