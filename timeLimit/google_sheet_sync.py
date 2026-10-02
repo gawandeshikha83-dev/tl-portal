@@ -1,6 +1,7 @@
 import requests
 from datetime import datetime
 
+
 GOOGLE_SHEET_URL = (
     "https://script.google.com/macros/s/"
     "AKfycbwkkVspWfHe_ME3egCpERrPynXcve-8Cg6HCmDkkGIM6gMebEuDbq3OEFH9HRAkwS7xog"
@@ -9,45 +10,39 @@ GOOGLE_SHEET_URL = (
 
 
 # ============================================================
-# CONVERT DJANGO RECORD → GOOGLE SHEET RECORD
+# DJANGO RECORD → GOOGLE SHEET DATA
 # ============================================================
 
-def record_to_sheet_data(record):
 
+
+def record_to_sheet_data(record):
     received_date = ""
 
     if record.received_date:
         received_date = record.received_date.strftime("%Y-%m-%d")
 
     return {
-        "स.क्र.": record.sno,
-        "TL No.": record.tl_no or "",
-        "प्राप्ति दिनांक": received_date,
-        "प्रेषक": record.sender_name or "",
-        "क्र/दिनांक": record.letter_no_date or "",
-        "विषय": record.subject or "",
-        "संबंधित शाखा का नाम": record.section_name or "",
-        "विवरण": record.description or "",
-        "वर्तमान स्थिति": record.current_situation or "",
-        "स्थिति": record.current_status or "Pending",
-
-        # Google Drive links
-        "TL PDF": record.tl_pdf_drive_url or "",
-        "Answer PDF": record.answer_pdf_drive_url or "",
+        "sno": record.sno,
+        "tl_no": record.tl_no or "",
+        "received_date": received_date,
+        "sender_name": record.sender_name or "",
+        "letter_no_date": record.letter_no_date or "",
+        "subject": record.subject or "",
+        "section_name": record.section_name or "",
+        "description": record.description or "",
+        "current_situation": record.current_situation or "",
+        "current_status": record.current_status or "Pending",
+        "tl_pdf_drive_url": record.tl_pdf_drive_url or "",
+        "answer_pdf_drive_url": record.answer_pdf_drive_url or "",
     }
 
-
 # ============================================================
-# ADD / UPDATE RECORD IN GOOGLE SHEET
+# SAVE / UPDATE → GOOGLE SHEET
 # ============================================================
 
 def save_record_to_sheet(record, old_tl_no=None):
 
     data = record_to_sheet_data(record)
-
-    # --------------------------------------------------------
-    # UPDATE
-    # --------------------------------------------------------
 
     if old_tl_no:
 
@@ -57,10 +52,6 @@ def save_record_to_sheet(record, old_tl_no=None):
             "record": data,
         }
 
-    # --------------------------------------------------------
-    # ADD
-    # --------------------------------------------------------
-
     else:
 
         payload = {
@@ -68,10 +59,18 @@ def save_record_to_sheet(record, old_tl_no=None):
             "record": data,
         }
 
+    print("GOOGLE SHEET REQUEST:", payload)
+
     response = requests.post(
         GOOGLE_SHEET_URL,
         json=payload,
         timeout=30,
+    )
+
+    print(
+        "GOOGLE SHEET RESPONSE:",
+        response.status_code,
+        response.text[:1000],
     )
 
     response.raise_for_status()
@@ -83,20 +82,20 @@ def save_record_to_sheet(record, old_tl_no=None):
         raise Exception(
             result.get(
                 "error",
-                "Google Sheet update failed."
+                "Google Sheet update failed.",
             )
         )
 
     print(
         "GOOGLE SHEET SYNC:",
-        result
+        result,
     )
 
     return result
 
 
 # ============================================================
-# DELETE RECORD FROM GOOGLE SHEET
+# DELETE → GOOGLE SHEET
 # ============================================================
 
 def delete_record_from_sheet(tl_no):
@@ -106,10 +105,21 @@ def delete_record_from_sheet(tl_no):
         "tl_no": str(tl_no),
     }
 
+    print(
+        "GOOGLE SHEET DELETE REQUEST:",
+        payload,
+    )
+
     response = requests.post(
         GOOGLE_SHEET_URL,
         json=payload,
         timeout=30,
+    )
+
+    print(
+        "GOOGLE SHEET DELETE RESPONSE:",
+        response.status_code,
+        response.text[:1000],
     )
 
     response.raise_for_status()
@@ -121,34 +131,99 @@ def delete_record_from_sheet(tl_no):
         raise Exception(
             result.get(
                 "error",
-                "Google Sheet delete failed."
+                "Google Sheet delete failed.",
             )
         )
 
     print(
         "GOOGLE SHEET DELETE:",
-        result
+        result,
     )
 
     return result
 
 
 # ============================================================
-# GET DATA FROM GOOGLE SHEET
+# DATE CLEANING
+# ============================================================
+
+def clean_date(value):
+
+    if not value:
+        return None
+
+    if hasattr(value, "date"):
+        return value.date()
+
+    value = str(value).strip()
+
+    if not value:
+        return None
+
+    formats = [
+        "%Y-%m-%d",
+        "%d-%m-%Y",
+        "%d/%m/%Y",
+        "%Y/%m/%d",
+    ]
+
+    for date_format in formats:
+
+        try:
+
+            return datetime.strptime(
+                value,
+                date_format,
+            ).date()
+
+        except ValueError:
+            continue
+
+    try:
+
+        return datetime.fromisoformat(
+            value.replace(
+                "Z",
+                "+00:00",
+            )
+        ).date()
+
+    except Exception:
+
+        return None
+
+
+# ============================================================
+# GOOGLE SHEET → PYTHON DATA
 # ============================================================
 
 def get_google_sheet_data():
 
+    print(
+        "GOOGLE SHEET GET:",
+        GOOGLE_SHEET_URL,
+    )
+
     response = requests.get(
         GOOGLE_SHEET_URL,
         timeout=30,
+        allow_redirects=True,
+    )
+
+    print(
+        "GOOGLE SHEET GET STATUS:",
+        response.status_code,
+    )
+
+    print(
+        "GOOGLE SHEET GET RESPONSE:",
+        response.text[:2000],
     )
 
     response.raise_for_status()
 
     records = response.json()
 
-    # Apps Script error response
     if isinstance(records, dict):
 
         if records.get("success") is False:
@@ -156,111 +231,118 @@ def get_google_sheet_data():
             raise Exception(
                 records.get(
                     "error",
-                    "Google Sheet read failed."
+                    "Google Sheet read failed.",
                 )
             )
 
         records = records.get(
             "data",
-            []
+            [],
         )
+
+    if not isinstance(records, list):
+
+        raise Exception(
+            "Google Sheet response is not a list."
+        )
+
+    print(
+        "GOOGLE SHEET RECORD COUNT:",
+        len(records),
+    )
 
     cleaned_records = []
 
     for row in records:
 
-        def clean_date(value):
+        if not isinstance(row, dict):
+            continue
 
-            if not value:
-                return None
+        tl_no = str(
+            row.get(
+                "TL No.",
+                "",
+            )
+        ).strip()
 
-            if hasattr(value, "date"):
-                return value.date()
-
-            try:
-
-                return datetime.fromisoformat(
-                    str(value).replace(
-                        "Z",
-                        "+00:00"
-                    )
-                ).date()
-
-            except Exception:
-
-                try:
-
-                    return datetime.strptime(
-                        str(value),
-                        "%Y-%m-%d"
-                    ).date()
-
-                except Exception:
-
-                    return None
+        if not tl_no:
+            continue
 
         cleaned_records.append({
 
             "sno": row.get(
-                "स.क्र."
+                "स.क्र.",
+                "",
             ),
 
-            "tl_no": row.get(
-                "TL No.",
-                ""
-            ),
+            "tl_no": tl_no,
 
             "received_date": clean_date(
                 row.get(
-                    "प्राप्ति दिनांक"
+                    "प्राप्ति दिनांक",
+                    "",
                 )
             ),
 
             "sender_name": row.get(
                 "प्रेषक",
-                ""
+                "",
             ),
 
             "letter_no_date": row.get(
                 "क्र/दिनांक",
-                ""
+                "",
             ),
 
             "subject": row.get(
                 "विषय",
-                ""
+                "",
             ),
 
             "section_name": row.get(
                 "संबंधित शाखा का नाम",
-                ""
+                "",
             ),
 
             "description": row.get(
                 "विवरण",
-                ""
+                "",
             ),
 
             "current_situation": row.get(
                 "वर्तमान स्थिति",
-                ""
+                "",
             ),
 
-            "current_status": row.get(
-                "स्थिति",
-                "Pending"
+            "current_status": (
+                row.get(
+                    "स्थिति",
+                    "Pending",
+                )
+                or "Pending"
             ),
 
-            "tl_pdf_drive_url": row.get(
-                "TL PDF",
-                ""
-            ),
+            "tl_pdf_drive_url": str(
+                row.get(
+                    "TL PDF",
+                    "",
+                )
+                or ""
+            ).strip(),
 
-            "answer_pdf_drive_url": row.get(
-                "Answer PDF",
-                ""
-            ),
+            "answer_pdf_drive_url": str(
+                row.get(
+                    "Answer PDF",
+                    "",
+                )
+                or ""
+            ).strip(),
         })
+
+    print(
+        "CLEANED GOOGLE SHEET RECORDS:",
+        len(cleaned_records),
+    )
 
     return cleaned_records
 
@@ -282,81 +364,180 @@ def sync_sheet_to_portal():
         tl_no = str(
             data.get(
                 "tl_no",
-                ""
+                "",
             )
         ).strip()
 
         if not tl_no:
             continue
 
-        defaults = {
+        try:
 
-            "sno": data.get(
-                "sno"
-            ),
+            record = TimeLimit.objects.filter(
+                tl_no=tl_no,
+            ).first()
 
-            "received_date": data.get(
-                "received_date"
-            ),
+            # ------------------------------------------------
+            # EXISTING RECORD
+            # ------------------------------------------------
 
-            "sender_name": data.get(
-                "sender_name",
-                ""
-            ),
+            if record:
 
-            "letter_no_date": data.get(
-                "letter_no_date",
-                ""
-            ),
+                record.sno = data.get(
+                    "sno"
+                )
 
-            "subject": data.get(
-                "subject",
-                ""
-            ),
+                record.received_date = data.get(
+                    "received_date"
+                )
 
-            "section_name": data.get(
-                "section_name",
-                ""
-            ),
+                record.sender_name = data.get(
+                    "sender_name",
+                    "",
+                )
 
-            "description": data.get(
-                "description",
-                ""
-            ),
+                record.letter_no_date = data.get(
+                    "letter_no_date",
+                    "",
+                )
 
-            "current_situation": data.get(
-                "current_situation",
-                ""
-            ),
+                record.subject = data.get(
+                    "subject",
+                    "",
+                )
 
-            "current_status": data.get(
-                "current_status",
-                "Pending"
-            ),
+                record.section_name = data.get(
+                    "section_name",
+                    "",
+                )
 
-            "tl_pdf_drive_url": data.get(
-                "tl_pdf_drive_url",
-                ""
-            ),
+                record.description = data.get(
+                    "description",
+                    "",
+                )
 
-            "answer_pdf_drive_url": data.get(
-                "answer_pdf_drive_url",
-                ""
-            ),
-        }
+                record.current_situation = data.get(
+                    "current_situation",
+                    "",
+                )
 
-        record, created = TimeLimit.objects.update_or_create(
+                record.current_status = data.get(
+                    "current_status",
+                    "Pending",
+                )
 
-            tl_no=tl_no,
+                # --------------------------------------------
+                # IMPORTANT:
+                # Blank Sheet PDF URL will NOT erase
+                # an existing Django PDF Drive URL.
+                # --------------------------------------------
 
-            defaults=defaults,
-        )
+                if data.get(
+                    "tl_pdf_drive_url"
+                ):
 
-        synced_count += 1
+                    record.tl_pdf_drive_url = data.get(
+                        "tl_pdf_drive_url"
+                    )
+
+                if data.get(
+                    "answer_pdf_drive_url"
+                ):
+
+                    record.answer_pdf_drive_url = data.get(
+                        "answer_pdf_drive_url"
+                    )
+
+                record.save()
+
+                print(
+                    "SYNCED EXISTING:",
+                    tl_no,
+                )
+
+            # ------------------------------------------------
+            # NEW RECORD
+            # ------------------------------------------------
+
+            else:
+
+                record = TimeLimit.objects.create(
+
+                    sno=data.get(
+                        "sno"
+                    ),
+
+                    tl_no=tl_no,
+
+                    received_date=data.get(
+                        "received_date"
+                    ),
+
+                    sender_name=data.get(
+                        "sender_name",
+                        "",
+                    ),
+
+                    letter_no_date=data.get(
+                        "letter_no_date",
+                        "",
+                    ),
+
+                    subject=data.get(
+                        "subject",
+                        "",
+                    ),
+
+                    section_name=data.get(
+                        "section_name",
+                        "",
+                    ),
+
+                    description=data.get(
+                        "description",
+                        "",
+                    ),
+
+                    current_situation=data.get(
+                        "current_situation",
+                        "",
+                    ),
+
+                    current_status=data.get(
+                        "current_status",
+                        "Pending",
+                    ),
+
+                    tl_pdf_drive_url=data.get(
+                        "tl_pdf_drive_url",
+                        "",
+                    ),
+
+                    answer_pdf_drive_url=data.get(
+                        "answer_pdf_drive_url",
+                        "",
+                    ),
+                )
+
+                print(
+                    "CREATED NEW:",
+                    tl_no,
+                )
+
+            synced_count += 1
+
+        except Exception as error:
+
+            print(
+                "SYNC ERROR:",
+                tl_no,
+                error,
+            )
+
 
     print(
-        f"GOOGLE SHEET → PORTAL: "
-        f"{synced_count} records synced."
+        "GOOGLE SHEET → PORTAL:",
+        f"{synced_count} records synced.",
     )
 
     return synced_count
