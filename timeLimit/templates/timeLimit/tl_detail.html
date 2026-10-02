@@ -2,17 +2,12 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>TL Management Portal</title>
+    <title>{{ record.tl_no }} - TL Management Portal</title>
 
     <style>
-
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -21,160 +16,94 @@
             color: #1f2937;
         }
 
-        /* =========================
-           SIDEBAR
-        ========================= */
-
+        /* SIDEBAR */
         .sidebar {
             position: fixed;
             left: 0;
             top: 0;
-
             width: 245px;
             height: 100vh;
-
             background: #173b70;
             color: white;
-
             z-index: 1000;
-
             transition: .3s ease;
-
             box-shadow: 3px 0 15px rgba(0,0,0,.12);
-
             overflow-y: auto;
         }
 
-        .sidebar.closed {
-            width: 70px;
-        }
-
-        /* LOGO */
+        .sidebar.closed { width: 70px; }
 
         .sidebar-header {
             height: 72px;
-
             display: flex;
             align-items: center;
-
             padding: 0 18px;
-
             border-bottom: 1px solid rgba(255,255,255,.12);
-
             overflow: hidden;
         }
 
-        .sidebar-logo {
-            font-size: 22px;
-            min-width: 35px;
-        }
+        .sidebar-logo { font-size: 22px; min-width: 35px; }
 
         .sidebar-title {
             margin-left: 10px;
-
             font-size: 17px;
             font-weight: 700;
-
             white-space: nowrap;
-
-            transition: .2s;
         }
 
-        .sidebar.closed .sidebar-title {
-            display: none;
-        }
+        .sidebar.closed .sidebar-title,
+        .sidebar.closed .menu-text { display: none; }
 
-        /* MENU */
-
-        .menu {
-            padding: 15px 10px;
-        }
+        .menu { padding: 15px 10px; }
 
         .menu a {
             display: flex;
             align-items: center;
-
             height: 46px;
-
             margin-bottom: 6px;
-
             padding: 0 13px;
-
             border-radius: 8px;
-
             color: white;
             text-decoration: none;
-
             font-size: 14px;
-
-            transition: .2s;
-
             white-space: nowrap;
+            transition: .2s;
         }
 
         .menu a:hover,
-        .menu a.active {
-            background: rgba(255,255,255,.15);
-        }
+        .menu a.active { background: rgba(255,255,255,.15); }
 
         .menu-icon {
             width: 30px;
             min-width: 30px;
-
             font-size: 18px;
-
             text-align: center;
         }
 
-        .menu-text {
-            margin-left: 9px;
+        .menu-text { margin-left: 9px; }
 
-            transition: .2s;
-        }
-
-        .sidebar.closed .menu-text {
-            display: none;
-        }
-
-        /* =========================
-           MAIN AREA
-        ========================= */
-
+        /* MAIN */
         .main {
             margin-left: 245px;
-
             min-height: 100vh;
-
             transition: .3s ease;
         }
 
-        .main.expanded {
-            margin-left: 70px;
-        }
+        .main.expanded { margin-left: 70px; }
 
-        /* =========================
-           TOP HEADER
-        ========================= */
-
+        /* HEADER */
         .top-header {
-            height: 72px;
-
+            min-height: 72px;
             background: white;
-
             display: flex;
             align-items: center;
-
             justify-content: space-between;
-
-            padding: 0 22px;
-
+            gap: 12px;
+            padding: 12px 22px;
             border-bottom: 1px solid #e5eaf0;
-
             position: sticky;
             top: 0;
-
             z-index: 900;
-
             box-shadow: 0 2px 8px rgba(0,0,0,.05);
         }
 
@@ -187,1123 +116,654 @@
         .toggle-btn {
             width: 42px;
             height: 42px;
-
             border: none;
-
             background: #eef4fb;
-
             color: #173b70;
-
             border-radius: 8px;
-
             font-size: 22px;
-
             cursor: pointer;
-        }
-
-        .toggle-btn:hover {
-            background: #dceafa;
         }
 
         .portal-name {
             font-size: 21px;
             font-weight: 700;
-
             color: #173b70;
         }
 
-        .portal-subtitle {
-            font-size: 11px;
-            color: #718096;
-        }
-
-        /* =========================
-           RECORD NAVIGATION
-        ========================= */
+        .portal-subtitle { font-size: 11px; color: #718096; }
 
         .record-navigation {
             display: flex;
             align-items: center;
-
             gap: 8px;
         }
 
-        .nav-btn {
+        .nav-btn, .record-count {
             text-decoration: none;
-
-            padding: 8px 13px;
-
+            padding: 8px 12px;
             border-radius: 7px;
-
             background: #eef4fb;
-
             color: #173b70;
-
-            font-size: 13px;
-            font-weight: 600;
-
-            transition: .2s;
-        }
-
-        .nav-btn:hover {
-            background: #dceafa;
-        }
-
-        .nav-disabled {
-            opacity: .4;
-            pointer-events: none;
-        }
-
-        .record-count {
-            padding: 7px 10px;
-
-            border-radius: 7px;
-
-            background: #f1f5f9;
-
-            color: #475569;
-
             font-size: 12px;
-
+            font-weight: 600;
             white-space: nowrap;
         }
 
-        /* =========================
-           PAGE
-        ========================= */
+        .nav-disabled { opacity: .4; pointer-events: none; }
 
-        .page {
-            padding: 22px;
+        .record-count {
+            background: #f1f5f9;
+            color: #475569;
         }
+
+        /* PAGE */
+        .page { padding: 22px; }
 
         .breadcrumb {
             margin-bottom: 16px;
-
             font-size: 13px;
-
             color: #64748b;
         }
 
         .breadcrumb a {
             color: #2563a6;
             text-decoration: none;
-
             font-weight: 600;
         }
 
-        /* =========================
-           MAIN GRID
-        ========================= */
-
         .main-grid {
             display: grid;
-
-            grid-template-columns: 42% 58%;
-
+            grid-template-columns: minmax(320px, 42%) minmax(0, 58%);
             gap: 18px;
-
-            min-height: calc(100vh - 150px);
+            align-items: stretch;
         }
-
-        /* =========================
-           CARD
-        ========================= */
 
         .card {
             background: white;
-
             border-radius: 13px;
-
             border: 1px solid #e5eaf0;
-
             box-shadow: 0 5px 18px rgba(15,23,42,.07);
-
             overflow: hidden;
+            min-width: 0;
         }
 
         .card-header {
             min-height: 58px;
-
             padding: 13px 18px;
-
             display: flex;
-
             align-items: center;
-
             justify-content: space-between;
-
+            flex-wrap: wrap;
             gap: 10px;
-
             border-bottom: 1px solid #e8edf3;
         }
 
         .card-title {
             font-size: 17px;
-
             font-weight: 700;
-
             color: #173b70;
         }
 
-        /* =========================
-           DETAILS
-        ========================= */
-
-        .details-body {
-            padding: 7px 18px 15px;
-        }
+        /* DETAILS */
+        .details-body { padding: 7px 18px 15px; }
 
         .detail-row {
             display: grid;
-
-            grid-template-columns: 145px 1fr;
-
+            grid-template-columns: 145px minmax(0, 1fr);
             gap: 12px;
-
             padding: 11px 0;
-
             border-bottom: 1px solid #edf1f5;
         }
 
-        .detail-row:last-child {
-            border-bottom: none;
-        }
+        .detail-row:last-child { border-bottom: none; }
 
         .label {
             font-size: 13px;
-
             font-weight: 700;
-
             color: #64748b;
         }
 
         .value {
             font-size: 13px;
-
             color: #1e293b;
-
-            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
-        .description-box {
-            line-height: 1.6;
-        }
-
-        /* =========================
-           STATUS
-        ========================= */
+        .description-box { line-height: 1.7; }
 
         .status {
             display: inline-block;
-
             padding: 5px 11px;
-
             border-radius: 20px;
-
             font-size: 11px;
-
             font-weight: 700;
         }
 
-        .pending {
-            background: #fff4cc;
-            color: #946200;
-        }
+        .pending { background: #fff4cc; color: #946200; }
+        .disposed { background: #dcfce7; color: #166534; }
 
-        .disposed {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        /* =========================
-           DOCUMENT BUTTONS
-        ========================= */
-
+        /* LEFT PDF LINKS */
         .documents {
             padding: 14px 18px;
-
             border-top: 1px solid #e8edf3;
-
             display: flex;
-
             flex-wrap: wrap;
-
             gap: 8px;
         }
 
         .document-link {
+            display: inline-block;
             text-decoration: none;
-
-            padding: 8px 12px;
-
+            padding: 9px 12px;
             border-radius: 7px;
-
             font-size: 12px;
-
             font-weight: 600;
         }
 
-        .document-link.tl {
-            background: #e8f1ff;
-            color: #175ea8;
-        }
+        .document-link.tl { background: #e8f1ff; color: #175ea8; }
+        .document-link.answer { background: #e7f8ed; color: #16733b; }
 
-        .document-link.answer {
-            background: #e7f8ed;
-            color: #16733b;
-        }
-
-        /* =========================
-           PDF AREA
-        ========================= */
-
+        /* PDF PREVIEW */
         .pdf-card {
             display: flex;
-
             flex-direction: column;
-
             min-height: 700px;
         }
 
-        .pdf-header {
-            flex-shrink: 0;
-        }
+        .pdf-header { flex-shrink: 0; }
 
         .pdf-buttons {
             display: flex;
-
+            flex-wrap: wrap;
             gap: 7px;
         }
 
         .pdf-btn {
             border: 1px solid #d5dce5;
-
             background: #f8fafc;
-
             color: #334155;
-
-            padding: 7px 12px;
-
+            padding: 8px 12px;
             border-radius: 7px;
-
             cursor: pointer;
-
+            font-family: inherit;
             font-size: 12px;
-
             font-weight: 600;
         }
 
-        .pdf-btn:hover {
-            background: #e9f1fb;
-        }
+        .pdf-btn:hover { background: #e9f1fb; }
 
         .pdf-btn.active {
             background: #2563a6;
-
             border-color: #2563a6;
-
             color: white;
         }
 
-        /* SIMPLE PDF VIEWER */
-
         .pdf-viewer {
             flex: 1;
-
-            background: #525659;
-
             min-height: 640px;
+            background: #525659;
+            position: relative;
         }
 
-        .pdf-viewer iframe {
+        #pdfViewer {
             display: block;
-
             width: 100%;
-
-            height: 100%;
-
-            min-height: 640px;
-
+            height: 700px;
             border: none;
-
             background: white;
         }
 
         .pdf-empty {
-            height: 640px;
-
+            min-height: 640px;
             display: flex;
-
             align-items: center;
-
             justify-content: center;
-
+            text-align: center;
+            padding: 20px;
             color: white;
-
             font-size: 14px;
         }
 
-        /* =========================
-           BOTTOM NAVIGATION
-        ========================= */
+        .pdf-open-fallback {
+            display: block;
+            padding: 10px;
+            background: #eef4fb;
+            text-align: center;
+            font-size: 12px;
+        }
 
+        .pdf-open-fallback a {
+            color: #175ea8;
+            font-weight: 700;
+        }
+
+        /* BOTTOM NAVIGATION */
         .bottom-navigation {
             margin-top: 15px;
-
             display: flex;
-
             align-items: center;
-
             justify-content: space-between;
-
             gap: 10px;
         }
 
         .bottom-btn {
             text-decoration: none;
-
             background: white;
-
             border: 1px solid #dce3ec;
-
             padding: 9px 15px;
-
             border-radius: 7px;
-
             color: #2563a6;
-
             font-size: 12px;
-
             font-weight: 600;
         }
 
-        .bottom-btn:hover {
-            background: #eef5ff;
-        }
+        .bottom-btn:hover { background: #eef5ff; }
 
-        /* =========================
-           MOBILE
-        ========================= */
-
-        @media (max-width: 1000px) {
-
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .pdf-card {
-                min-height: 600px;
-            }
-
-            .pdf-viewer,
-            .pdf-viewer iframe {
-                min-height: 600px;
-            }
-
+        /* RESPONSIVE */
+        @media (max-width: 1100px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .pdf-card { min-height: 600px; }
+            #pdfViewer { height: 650px; }
         }
 
         @media (max-width: 700px) {
-
             .sidebar {
                 width: 245px;
-
                 transform: translateX(-100%);
             }
 
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .sidebar.closed { width: 245px; }
+            .sidebar.closed .sidebar-title,
+            .sidebar.closed .menu-text { display: initial; }
 
-            .sidebar.closed {
-                width: 245px;
-            }
-
-            .main,
-            .main.expanded {
-                margin-left: 0;
-            }
+            .main, .main.expanded { margin-left: 0; }
 
             .top-header {
-                height: auto;
-
                 min-height: 72px;
-
                 padding: 12px;
-
                 flex-wrap: wrap;
             }
 
-            .portal-name {
-                font-size: 17px;
-            }
-
-            .record-navigation {
-                width: 100%;
-
-                justify-content: center;
-            }
-
-            .page {
-                padding: 12px;
-            }
+            .portal-name { font-size: 17px; }
+            .record-navigation { width: 100%; justify-content: center; }
+            .page { padding: 12px; }
 
             .detail-row {
                 grid-template-columns: 1fr;
-
                 gap: 4px;
             }
 
-            .pdf-buttons {
-                width: 100%;
-            }
+            .pdf-buttons { width: 100%; }
+            .pdf-btn { flex: 1; }
+            #pdfViewer { height: 600px; }
 
-            .pdf-btn {
-                flex: 1;
-            }
-
+            .bottom-navigation { flex-wrap: wrap; }
         }
-
     </style>
-
 </head>
-
 
 <body>
 
-
-<!-- =====================================================
-     SIDEBAR
-===================================================== -->
-
 <aside class="sidebar" id="sidebar">
-
     <div class="sidebar-header">
-
-        <div class="sidebar-logo">
-            ⚖️
-        </div>
-
-        <div class="sidebar-title">
-            TL Management
-        </div>
-
+        <div class="sidebar-logo">⚖️</div>
+        <div class="sidebar-title">TL Management</div>
     </div>
 
-
     <nav class="menu">
-
         <a href="{% url 'dashboard' %}">
-            <span class="menu-icon">🏠</span>
-            <span class="menu-text">Dashboard</span>
+            <span class="menu-icon">🏠</span><span class="menu-text">Dashboard</span>
         </a>
-
-
         <a href="{% url 'tl_records' %}" class="active">
-            <span class="menu-icon">📋</span>
-            <span class="menu-text">TL Records</span>
+            <span class="menu-icon">📋</span><span class="menu-text">TL Records</span>
         </a>
-
-
         <a href="{% url 'add_tl' %}">
-            <span class="menu-icon">➕</span>
-            <span class="menu-text">Add TL</span>
+            <span class="menu-icon">➕</span><span class="menu-text">Add TL</span>
         </a>
-
-
         <a href="{% url 'reports' %}">
-            <span class="menu-icon">📊</span>
-            <span class="menu-text">Reports</span>
+            <span class="menu-icon">📊</span><span class="menu-text">Reports</span>
         </a>
-
-
         <a href="{% url 'excel_upload' %}">
-            <span class="menu-icon">📥</span>
-            <span class="menu-text">Excel Upload</span>
+            <span class="menu-icon">📥</span><span class="menu-text">Excel Upload</span>
         </a>
-
-
         <a href="{% url 'excel_download' %}">
-            <span class="menu-icon">📤</span>
-            <span class="menu-text">Excel Download</span>
+            <span class="menu-icon">📤</span><span class="menu-text">Excel Download</span>
         </a>
-
-
         <a href="{% url 'pdf_download' %}">
-            <span class="menu-icon">📄</span>
-            <span class="menu-text">PDF Report</span>
+            <span class="menu-icon">📄</span><span class="menu-text">PDF Report</span>
         </a>
-
-
         <a href="/admin/">
-            <span class="menu-icon">🔐</span>
-            <span class="menu-text">Admin</span>
+            <span class="menu-icon">🔐</span><span class="menu-text">Admin</span>
         </a>
-
     </nav>
-
 </aside>
-
-
-<!-- =====================================================
-     MAIN
-===================================================== -->
 
 <main class="main" id="main">
 
-
-    <!-- HEADER -->
-
     <header class="top-header">
-
         <div class="header-left">
-
-            <button
-                type="button"
-                class="toggle-btn"
-                onclick="toggleSidebar()"
-                title="Sidebar Open / Close"
-            >
-                ☰
-            </button>
-
-
+            <button type="button" class="toggle-btn"
+                    onclick="toggleSidebar()" title="Sidebar Open / Close">☰</button>
             <div>
-
-                <div class="portal-name">
-                    TL Management Portal
-                </div>
-
-                <div class="portal-subtitle">
-                    Time Limit Management System
-                </div>
-
+                <div class="portal-name">TL Management Portal</div>
+                <div class="portal-subtitle">Time Limit Management System</div>
             </div>
-
         </div>
-
-
-        <!-- PREVIOUS / NEXT -->
 
         <div class="record-navigation">
-
             {% if previous_record %}
-
-                <a
-                    href="{% url 'tl_detail' previous_record.pk %}"
-                    class="nav-btn"
-                >
-                    ← Previous
-                </a>
-
+                <a href="{% url 'tl_detail' previous_record.pk %}" class="nav-btn">← Previous</a>
             {% else %}
-
-                <span class="nav-btn nav-disabled">
-                    ← Previous
-                </span>
-
+                <span class="nav-btn nav-disabled">← Previous</span>
             {% endif %}
 
-
-            <span class="record-count">
-                {{ current_number }} / {{ total_records }}
-            </span>
-
+            <span class="record-count">{{ current_number }} / {{ total_records }}</span>
 
             {% if next_record %}
-
-                <a
-                    href="{% url 'tl_detail' next_record.pk %}"
-                    class="nav-btn"
-                >
-                    Next →
-                </a>
-
+                <a href="{% url 'tl_detail' next_record.pk %}" class="nav-btn">Next →</a>
             {% else %}
-
-                <span class="nav-btn nav-disabled">
-                    Next →
-                </span>
-
+                <span class="nav-btn nav-disabled">Next →</span>
             {% endif %}
-
         </div>
-
     </header>
-
-
-    <!-- PAGE -->
 
     <div class="page">
 
-
         <div class="breadcrumb">
-
-            <a href="{% url 'dashboard' %}">
-                Dashboard
-            </a>
-
+            <a href="{% url 'dashboard' %}">Dashboard</a>
             &nbsp; / &nbsp;
-
-            <a href="{% url 'tl_records' %}">
-                TL Records
-            </a>
-
-            &nbsp; / &nbsp;
-
-            Details
-
+            <a href="{% url 'tl_records' %}">TL Records</a>
+            &nbsp; / &nbsp; Details
         </div>
-
-
-        <!-- MAIN GRID -->
 
         <div class="main-grid">
 
-
-            <!-- ==========================================
-                 LEFT DETAILS
-            =========================================== -->
-
+            <!-- LEFT: TL DETAILS -->
             <section class="card">
 
-
                 <div class="card-header">
-
-                    <div class="card-title">
-                        📋 TL Details
-                    </div>
-
+                    <div class="card-title">📋 TL Details</div>
 
                     {% if record.current_status == "Pending" %}
-
-                        <span class="status pending">
-                            Pending
-                        </span>
-
+                        <span class="status pending">Pending</span>
                     {% else %}
-
-                        <span class="status disposed">
-                            Disposed
-                        </span>
-
+                        <span class="status disposed">Disposed</span>
                     {% endif %}
-
                 </div>
-
 
                 <div class="details-body">
 
-
                     <div class="detail-row">
-
-                        <div class="label">
-                            स.क्र.
-                        </div>
-
-                        <div class="value">
-                            {{ record.sno }}
-                        </div>
-
+                        <div class="label">स.क्र.</div>
+                        <div class="value">{{ record.sno|default:"-" }}</div>
                     </div>
 
-
                     <div class="detail-row">
-
-                        <div class="label">
-                            TL No.
-                        </div>
-
-                        <div class="value">
-                            {{ record.tl_no|default:"-" }}
-                        </div>
-
+                        <div class="label">TL No.</div>
+                        <div class="value">{{ record.tl_no|default:"-" }}</div>
                     </div>
 
-
                     <div class="detail-row">
-
-                        <div class="label">
-                            प्राप्ति दिनांक
-                        </div>
-
+                        <div class="label">प्राप्ति दिनांक</div>
                         <div class="value">
-
                             {% if record.received_date %}
                                 {{ record.received_date|date:"d-m-Y" }}
-                            {% else %}
-                                -
-                            {% endif %}
-
+                            {% else %}-{% endif %}
                         </div>
-
                     </div>
 
-
                     <div class="detail-row">
-
-                        <div class="label">
-                            प्रेषक
-                        </div>
-
-                        <div class="value">
-                            {{ record.sender_name|default:"-" }}
-                        </div>
-
+                        <div class="label">प्रेषक</div>
+                        <div class="value">{{ record.sender_name|default:"-" }}</div>
                     </div>
 
-
                     <div class="detail-row">
-
-                        <div class="label">
-                            क्र/दिनांक
-                        </div>
-
-                        <div class="value">
-                            {{ record.letter_no_date|default:"-" }}
-                        </div>
-
+                        <div class="label">क्र/दिनांक</div>
+                        <div class="value">{{ record.letter_no_date|default:"-" }}</div>
                     </div>
 
-
                     <div class="detail-row">
-
-                        <div class="label">
-                            विषय
-                        </div>
-
-                        <div class="value">
-                            {{ record.subject|default:"-" }}
-                        </div>
-
+                        <div class="label">विषय</div>
+                        <div class="value">{{ record.subject|default:"-" }}</div>
                     </div>
 
-
                     <div class="detail-row">
-
-                        <div class="label">
-                            संबंधित शाखा
-                        </div>
-
-                        <div class="value">
-                            {{ record.section_name|default:"-" }}
-                        </div>
-
+                        <div class="label">संबंधित शाखा</div>
+                        <div class="value">{{ record.section_name|default:"-" }}</div>
                     </div>
 
-
                     <div class="detail-row">
-
-                        <div class="label">
-                            विवरण
-                        </div>
-
+                        <div class="label">विवरण</div>
                         <div class="value description-box">
-
                             {% if record.description %}
-
                                 {{ record.description|linebreaksbr }}
-
-                            {% else %}
-
-                                -
-
-                            {% endif %}
-
+                            {% else %}-{% endif %}
                         </div>
-
                     </div>
 
-
                     <div class="detail-row">
+                        <div class="label">वर्तमान स्थिति</div>
+                        <div class="value description-box">
+                            {% if record.current_situation %}
+                                {{ record.current_situation|linebreaksbr }}
+                            {% else %}-{% endif %}
+                        </div>
+                    </div>
 
-    <div class="label">
-        वर्तमान स्थिति
-    </div>
-
-    <div class="value description-box">
-
-        {% if record.current_situation %}
-            {{ record.current_situation|linebreaksbr }}
-        {% else %}
-            -
-        {% endif %}
-
-    </div>
-
-</div>
                 </div>
 
-
-                <!-- DOCUMENT LINKS -->
-
+                <!-- Existing PDF links remain open in a new tab -->
                 <div class="documents">
 
-
                     {% if record.tl_pdf_drive_url %}
-<a
-    href="{{ record.tl_pdf_drive_url }}"
-    target="_blank"
-    rel="noopener noreferrer"
-    class="document-link tl"
->
-    📄 TL PDF
-</a>
-{% endif %}
-
+                        <a href="{{ record.tl_pdf_drive_url }}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="document-link tl">
+                            📄 TL PDF
+                        </a>
+                    {% elif record.tl_pdf %}
+                        <a href="{{ record.tl_pdf.url }}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="document-link tl">
+                            📄 TL PDF
+                        </a>
+                    {% endif %}
 
                     {% if record.answer_pdf_drive_url %}
-<a
-    href="{{ record.answer_pdf_drive_url }}"
-    target="_blank"
-    rel="noopener noreferrer"
-    class="document-link answer"
->
-    📑 Answer PDF
-</a>
-{% endif %}
+                        <a href="{{ record.answer_pdf_drive_url }}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="document-link answer">
+                            📑 Answer PDF
+                        </a>
+                    {% elif record.answer_pdf %}
+                        <a href="{{ record.answer_pdf.url }}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="document-link answer">
+                            📑 Answer PDF
+                        </a>
+                    {% endif %}
 
-
-                    {% if not record.tl_pdf and not record.answer_pdf %}
-
+                    {% if not record.tl_pdf_drive_url and not record.tl_pdf and not record.answer_pdf_drive_url and not record.answer_pdf %}
                         <span style="color:#64748b;font-size:12px;">
                             कोई PDF उपलब्ध नहीं है।
                         </span>
-
                     {% endif %}
 
-
                 </div>
-
-
             </section>
 
-
-            <!-- ==========================================
-                 RIGHT PDF
-            =========================================== -->
-
+            <!-- RIGHT: PDF PREVIEW -->
             <section class="card pdf-card">
 
-
-                <div class="card-header">
-
-
-                    <div class="card-title">
-                        📄 Document Preview
-                    </div>
-
+                <div class="card-header pdf-header">
+                    <div class="card-title">📄 Document Preview</div>
 
                     <div class="pdf-buttons">
 
-
-                        {% if record.tl_pdf %}
-
-                            <button
-                                type="button"
-                                id="tlButton"
-                                class="pdf-btn active"
-                                onclick="showTL()"
-                            >
+                        {% if record.tl_pdf_drive_url or record.tl_pdf %}
+                            <button type="button" id="tlButton"
+                                    class="pdf-btn active" onclick="showTL()">
                                 TL PDF
                             </button>
-
                         {% endif %}
 
-
-                        {% if record.answer_pdf %}
-
-                            <button
-                                type="button"
-                                id="answerButton"
-                                class="pdf-btn"
-                                onclick="showAnswer()"
-                            >
+                        {% if record.answer_pdf_drive_url or record.answer_pdf %}
+                            <button type="button" id="answerButton"
+                                    class="pdf-btn" onclick="showAnswer()">
                                 Answer PDF
                             </button>
-
                         {% endif %}
 
+                    </div>
+                </div>
 
+                {% if record.tl_pdf_drive_url or record.tl_pdf or record.answer_pdf_drive_url or record.answer_pdf %}
+
+                    <div class="pdf-viewer">
+                        <iframe id="pdfViewer"
+                                src="about:blank"
+                                title="PDF Preview"
+                                allow="autoplay"
+                                loading="eager">
+                        </iframe>
                     </div>
 
-                </div>
+                    <div class="pdf-open-fallback">
+                        Preview नहीं दिखे तो
+                        <a id="openPdfLink" href="#" target="_blank"
+                           rel="noopener noreferrer">PDF नए tab में खोलें</a>
+                    </div>
 
+                {% else %}
 
-                <!-- SIMPLE PDF VIEWER -->
+                    <div class="pdf-empty">
+                        इस TL के लिए कोई PDF उपलब्ध नहीं है।
+                    </div>
 
-                {% if record.tl_pdf_drive_url %}
-
-<iframe
-    id="pdfViewer"
-    src="{{ record.tl_pdf_drive_url }}"
-    title="TL PDF Preview">
-</iframe>
-
-{% elif record.answer_pdf_drive_url %}
-
-<iframe
-    id="pdfViewer"
-    src="{{ record.answer_pdf_drive_url }}"
-    title="Answer PDF Preview"
-></iframe>
-
-{% else %}
-
-<div class="pdf-empty">
-    इस TL के लिए कोई PDF उपलब्ध नहीं है।
-</div>
-
-{% endif %}
-
-                </div>
-
+                {% endif %}
 
             </section>
 
-
         </div>
-
-
-        <!-- BOTTOM NAVIGATION -->
 
         <div class="bottom-navigation">
 
-
             {% if previous_record %}
-
-                <a
-                    href="{% url 'tl_detail' previous_record.pk %}"
-                    class="bottom-btn"
-                >
+                <a href="{% url 'tl_detail' previous_record.pk %}" class="bottom-btn">
                     ← Previous TL
                 </a>
+            {% else %}<span></span>{% endif %}
 
-            {% else %}
-
-                <span></span>
-
-            {% endif %}
-
-
-            <a
-                href="{% url 'tl_records' %}"
-                class="bottom-btn"
-            >
+            <a href="{% url 'tl_records' %}" class="bottom-btn">
                 ☰ All TL Records
             </a>
 
-
             {% if next_record %}
-
-                <a
-                    href="{% url 'tl_detail' next_record.pk %}"
-                    class="bottom-btn"
-                >
+                <a href="{% url 'tl_detail' next_record.pk %}" class="bottom-btn">
                     Next TL →
                 </a>
-
-            {% else %}
-
-                <span></span>
-
-            {% endif %}
-
+            {% else %}<span></span>{% endif %}
 
         </div>
-
-
     </div>
-
-
 </main>
 
-
-<!-- =====================================================
-     JAVASCRIPT
-===================================================== -->
-
 <script>
-
+/* SIDEBAR */
 function toggleSidebar() {
-
-    const sidebar =
-        document.getElementById("sidebar");
-
-    const main =
-        document.getElementById("main");
-
-
-    /*
-       Desktop:
-       Sidebar open / close
-    */
+    const sidebar = document.getElementById("sidebar");
+    const main = document.getElementById("main");
 
     if (window.innerWidth > 700) {
-
         sidebar.classList.toggle("closed");
-
         main.classList.toggle("expanded");
-
-    }
-
-    /*
-       Mobile:
-       Sidebar slide in / out
-    */
-
-    else {
-
+    } else {
         sidebar.classList.toggle("mobile-open");
-
     }
-
 }
 
+/* PDF URLS */
+const tlPdfUrl = "{% if record.tl_pdf_drive_url %}{{ record.tl_pdf_drive_url|escapejs }}{% elif record.tl_pdf %}{{ record.tl_pdf.url|escapejs }}{% endif %}";
+const answerPdfUrl = "{% if record.answer_pdf_drive_url %}{{ record.answer_pdf_drive_url|escapejs }}{% elif record.answer_pdf %}{{ record.answer_pdf.url|escapejs }}{% endif %}";
 
-/* =========================
-   PDF SWITCH
-========================= */
+/* Convert a standard Google Drive file URL to its preview URL */
+function getDrivePreviewUrl(url) {
+    if (!url) return "";
+
+    try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.toLowerCase();
+
+        if (host === "drive.google.com" || host.endsWith(".drive.google.com")) {
+
+            const match = parsed.pathname.match(/\/file\/d\/([^/]+)/);
+
+            let fileId = "";
+
+            if (match && match[1]) {
+                fileId = match[1];
+            } else {
+                fileId = parsed.searchParams.get("id") || "";
+            }
+
+            if (fileId) {
+                const driveUrl =
+                    "https://drive.google.com/file/d/" +
+                    encodeURIComponent(fileId) +
+                    "/view";
+
+                return "https://docs.google.com/gview?embedded=1&url=" +
+                    encodeURIComponent(driveUrl);
+            }
+        }
+
+    } catch (error) {
+        console.error("Invalid PDF URL:", error);
+    }
+
+    return url;
+}
+
+/* Load selected PDF into the right-side preview */
+function loadPDF(url, selectedButton) {
+    const viewer = document.getElementById("pdfViewer");
+    const openLink = document.getElementById("openPdfLink");
+
+    if (!viewer || !url) return;
+
+    viewer.src = getDrivePreviewUrl(url);
+
+    if (openLink) {
+        openLink.href = url;
+    }
+
+    document.querySelectorAll(".pdf-btn").forEach(function(button) {
+        button.classList.remove("active");
+    });
+
+    if (selectedButton) {
+        selectedButton.classList.add("active");
+    }
+}
 
 function showTL() {
-    const viewer = document.getElementById("pdfViewer");
-
-    if (viewer) {
-        viewer.src = "{{ record.tl_pdf_drive_url|default:'' }}";
-    }
+    loadPDF(tlPdfUrl, document.getElementById("tlButton"));
 }
 
 function showAnswer() {
-    const viewer = document.getElementById("pdfViewer");
-
-    if (viewer) {
-        viewer.src = "{{ record.answer_pdf_drive_url|default:'' }}";
-    }
+    loadPDF(answerPdfUrl, document.getElementById("answerButton"));
 }
 
-    const tlButton =
-        document.getElementById("tlButton");
-
-    const answerButton =
-        document.getElementById("answerButton");
-
-
-    if (answerButton) {
-
-        answerButton.classList.add("active");
-
+/* Open TL PDF by default; if unavailable, show Answer PDF */
+document.addEventListener("DOMContentLoaded", function() {
+    if (tlPdfUrl) {
+        showTL();
+    } else if (answerPdfUrl) {
+        showAnswer();
     }
-
-
-    if (tlButton) {
-
-        tlButton.classList.remove("active");
-
-    }
-
-}
-
+});
 </script>
-
 
 </body>
 </html>
