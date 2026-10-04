@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Employee Login - TL Management Portal</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #172554, #2563eb);
+        }
+
+        .login-box {
+            width: 380px;
+            max-width: 90%;
+            background: white;
+            padding: 35px;
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 45px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #172554;
+            margin: 0 0 8px;
+            font-size: 25px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 28px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .errorlist {
+            color: #dc2626;
+            padding-left: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-box">
+
+    <div class="logo">⚖️</div>
+
+    <h1>TL Management Portal</h1>
+
+    <div class="subtitle">Employee Login</div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.non_field_errors }}
+
+        <label for="{{ form.username.id_for_label }}">
+            Username
+        </label>
+
+        {{ form.username }}
+
+        <label for="{{ form.password.id_for_label }}">
+            Password
+        </label>
+
+        {{ form.password }}
+
+        <button type="submit">
+            🔐 Login
+        </button>
+    </form>
+
+    <div class="footer">
+        TL Management Portal
+    </div>
+
+</div>
+
+</body>
+</html>

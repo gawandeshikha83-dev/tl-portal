@@ -299,9 +299,17 @@
         TL Management Portal
     </div>
 
-    <button class="login-btn">
-        Login
+   <form method="post" action="{% url 'employee_logout' %}" style="margin: 0;">
+    {% csrf_token %}
+
+    <button
+        type="submit"
+        class="login-btn"
+        style="border: none; cursor: pointer;"
+    >
+        🚪 Logout
     </button>
+</form>
 
 </header>
 

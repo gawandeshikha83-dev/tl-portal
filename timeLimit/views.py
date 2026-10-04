@@ -52,41 +52,26 @@ import re
 # ============================================================
 
 def employee_login(request):
-
     if request.user.is_authenticated:
         return redirect('dashboard')
 
     if request.method == 'POST':
-
         form = AuthenticationForm(
             request,
             data=request.POST
         )
 
         if form.is_valid():
-
             user = form.get_user()
 
-            if user.is_staff:
+            login(
+                request,
+                user
+            )
 
-                messages.error(
-                    request,
-                    'Please use Admin Login.'
-                )
-
-            else:
-
-                login(
-                    request,
-                    user
-                )
-
-                return redirect(
-                    'dashboard'
-                )
+            return redirect('dashboard')
 
     else:
-
         form = AuthenticationForm()
 
     return render(
@@ -96,7 +81,6 @@ def employee_login(request):
             'form': form
         }
     )
-
 
 # ============================================================
 # EMPLOYEE LOGOUT
@@ -115,6 +99,7 @@ def employee_logout(request):
 # DASHBOARD
 # ============================================================
 
+@login_required
 def dashboard(request):
 
     total_tl = TimeLimit.objects.count()

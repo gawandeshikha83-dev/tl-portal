@@ -761,12 +761,17 @@
     </div>
 
 
-    <a
-        href="/admin/"
+    <form method="post" action="{% url 'employee_logout' %}" style="margin: 0;">
+    {% csrf_token %}
+
+    <button
+        type="submit"
         class="admin-btn"
+        style="border: none; cursor: pointer;"
     >
-        ⚙ Admin
-    </a>
+        🚪 Logout
+    </button>
+</form>
 
 </header>
 

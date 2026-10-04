@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,41 +21,32 @@
             background: linear-gradient(135deg, #172554, #2563eb);
         }
 
-        .login-container {
-            width: 100%;
-            max-width: 430px;
-            padding: 20px;
-        }
-
-        .login-card {
+        .login-box {
+            width: 380px;
+            max-width: 90%;
             background: white;
-            border-radius: 18px;
             padding: 35px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
         }
 
         .logo {
             text-align: center;
-            font-size: 50px;
-            margin-bottom: 8px;
+            font-size: 45px;
+            margin-bottom: 10px;
         }
 
         h1 {
             text-align: center;
             color: #172554;
-            margin: 0;
-            font-size: 27px;
+            margin: 0 0 8px;
+            font-size: 25px;
         }
 
         .subtitle {
             text-align: center;
             color: #64748b;
-            margin: 8px 0 28px;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
+            margin-bottom: 28px;
         }
 
         label {
@@ -64,125 +54,89 @@
             margin-bottom: 7px;
             font-weight: bold;
             color: #334155;
-            font-size: 14px;
         }
 
         input {
             width: 100%;
-            padding: 13px 14px;
+            padding: 12px;
+            margin-bottom: 18px;
             border: 1px solid #cbd5e1;
-            border-radius: 9px;
+            border-radius: 8px;
             font-size: 15px;
-            outline: none;
         }
 
         input:focus {
+            outline: none;
             border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
 
-        .login-btn {
+        button {
             width: 100%;
+            padding: 13px;
             border: none;
-            padding: 14px;
-            border-radius: 9px;
-            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            border-radius: 8px;
+            background: #2563eb;
             color: white;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 8px;
         }
 
-        .login-btn:hover {
-            opacity: 0.92;
-        }
-
-        .error-message {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 11px 13px;
-            border-radius: 8px;
-            margin-bottom: 18px;
-            font-size: 14px;
+        button:hover {
+            background: #1d4ed8;
         }
 
         .footer {
             text-align: center;
             margin-top: 22px;
+            font-size: 13px;
             color: #94a3b8;
-            font-size: 12px;
+        }
+
+        .errorlist {
+            color: #dc2626;
+            padding-left: 18px;
         }
     </style>
 </head>
 
 <body>
 
-<div class="login-container">
+<div class="login-box">
 
-    <div class="login-card">
+    <div class="logo">⚖️</div>
 
-        <div class="logo">⚖️</div>
+    <h1>TL Management Portal</h1>
 
-        <h1>TL Management Portal</h1>
+    <div class="subtitle">Employee Login</div>
 
-        <div class="subtitle">
-            Employee Login
-        </div>
+    <form method="post">
+        {% csrf_token %}
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="error-message">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
+        {{ form.non_field_errors }}
 
-        {% if form.errors %}
-            <div class="error-message">
-                Username or password is incorrect.
-            </div>
-        {% endif %}
+        <label for="{{ form.username.id_for_label }}">
+            Username
+        </label>
 
-        <form method="post">
-            {% csrf_token %}
+        {{ form.username }}
 
-            <div class="form-group">
-                <label for="id_username">Username</label>
-                <input
-                    type="text"
-                    name="username"
-                    id="id_username"
-                    placeholder="Enter username"
-                    required
-                    autofocus
-                >
-            </div>
+        <label for="{{ form.password.id_for_label }}">
+            Password
+        </label>
 
-            <div class="form-group">
-                <label for="id_password">Password</label>
-                <input
-                    type="password"
-                    name="password"
-                    id="id_password"
-                    placeholder="Enter password"
-                    required
-                >
-            </div>
+        {{ form.password }}
 
-            <button type="submit" class="login-btn">
-                🔐 Login
-            </button>
-        </form>
+        <button type="submit">
+            🔐 Login
+        </button>
+    </form>
 
-        <div class="footer">
-            TL Management Portal
-        </div>
-
+    <div class="footer">
+        TL Management Portal
     </div>
 
 </div>
 
 </body>
 </html>
-```
