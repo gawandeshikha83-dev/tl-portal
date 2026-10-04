@@ -10,14 +10,12 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-
 # Google Drive folders
 TL_PDF_FOLDER_ID = "1Q1E_PxdPTOPwIm6i10fVtwWRaZdbcRe1"
 ANSWER_PDF_FOLDER_ID = "1xQRodxwqAwRu1ILnlM_INKmYaiDrTiuM"
 
 
 def get_drive_service():
-
     google_credentials = os.environ.get("GOOGLE_CREDENTIALS")
 
     if not google_credentials:
@@ -50,12 +48,11 @@ def get_drive_service():
 
 
 def upload_file_to_drive(file_obj, file_name, folder_id):
-
     service = get_drive_service()
 
     file_metadata = {
         "name": file_name,
-        "parents": [folder_id],
+        "parents": [folder_id]
     }
 
     media = MediaIoBaseUpload(
@@ -64,19 +61,14 @@ def upload_file_to_drive(file_obj, file_name, folder_id):
         resumable=True
     )
 
-    uploaded_file = (
-        service.files()
-        .create(
-            body=file_metadata,
-            media_body=media,
-            fields="id,name,webViewLink,webContentLink"
-        )
-        .execute()
-    )
+    uploaded_file = service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields="id,name,webViewLink,webContentLink"
+    ).execute()
 
     file_id = uploaded_file.get("id")
 
-    # Allow users to open the PDF through the Drive link
     service.permissions().create(
         fileId=file_id,
         body={
@@ -85,14 +77,9 @@ def upload_file_to_drive(file_obj, file_name, folder_id):
         }
     ).execute()
 
-    # Get the final links again
-    uploaded_file = (
-        service.files()
-        .get(
-            fileId=file_id,
-            fields="id,name,webViewLink,webContentLink"
-        )
-        .execute()
-    )
+    uploaded_file = service.files().get(
+        fileId=file_id,
+        fields="id,name,webViewLink,webContentLink"
+    ).execute()
 
     return uploaded_file

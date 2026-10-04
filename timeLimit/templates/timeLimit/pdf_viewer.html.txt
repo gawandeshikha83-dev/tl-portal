@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PDF Viewer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: #525659;
+        }
+
+        #toolbar {
+            height: 52px;
+            width: 100%;
+            background: #263238;
+            color: white;
+
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            padding: 7px 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.25);
+
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        button {
+            border: 0;
+            background: #37474f;
+            color: white;
+
+            height: 36px;
+            min-width: 36px;
+
+            padding: 0 10px;
+            border-radius: 5px;
+
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #455a64;
+        }
+
+        button:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        #pageNumber {
+            width: 52px;
+            height: 32px;
+
+            border: 1px solid #78909c;
+            border-radius: 4px;
+
+            text-align: center;
+            background: white;
+            color: #222;
+
+            font-size: 14px;
+        }
+
+        #pageCount {
+            min-width: 55px;
+            font-size: 14px;
+        }
+
+        .separator {
+            width: 1px;
+            height: 28px;
+            background: #607d8b;
+            margin: 0 4px;
+        }
+
+        #zoomValue {
+            min-width: 58px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        #viewerContainer {
+            position: absolute;
+
+            top: 52px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+
+            overflow: auto;
+
+            background: #525659;
+            padding: 20px;
+        }
+
+        #pdfCanvas {
+            display: block;
+
+            margin: 0 auto;
+
+            background: white;
+
+            box-shadow:
+                0 2px 8px rgba(0,0,0,.35);
+        }
+
+        #loading {
+            position: fixed;
+
+            top: 52px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: white;
+            font-size: 18px;
+
+            background: #525659;
+            z-index: 50;
+        }
+
+        #errorMessage {
+            display: none;
+
+            position: fixed;
+
+            top: 52px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+
+            align-items: center;
+            justify-content: center;
+
+            color: white;
+            font-size: 16px;
+            text-align: center;
+
+            padding: 30px;
+        }
+
+        @media (max-width: 700px) {
+
+            #toolbar {
+                gap: 3px;
+                padding: 6px;
+            }
+
+            button {
+                min-width: 32px;
+                padding: 0 6px;
+            }
+
+            #zoomValue,
+            #pageCount {
+                min-width: 42px;
+                font-size: 12px;
+            }
+
+            #viewerContainer {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOOLBAR -->
+    <div id="toolbar">
+
+        <button id="prevPage" title="Previous Page">
+            ◀
+        </button>
+
+        <input
+            type="number"
+            id="pageNumber"
+            value="1"
+            min="1"
+            title="Page Number"
+        >
+
+        <span id="pageCount">/ 0</span>
+
+        <button id="nextPage" title="Next Page">
+            ▶
+        </button>
+
+        <div class="separator"></div>
+
+        <button id="zoomOut" title="Zoom Out">
+            −
+        </button>
+
+        <span id="zoomValue">
+            100%
+        </span>
+
+        <button id="zoomIn" title="Zoom In">
+            +
+        </button>
+
+        <button id="fitPage" title="Fit Page">
+            Fit
+        </button>
+
+        <div class="separator"></div>
+
+        <button id="printPdf" title="Print PDF">
+            🖨
+        </button>
+
+        <button id="downloadPdf" title="Download PDF">
+            ⬇
+        </button>
+
+    </div>
+
+
+    <!-- LOADING -->
+    <div id="loading">
+        Loading PDF...
+    </div>
+
+
+    <!-- ERROR -->
+    <div id="errorMessage">
+        PDF preview नहीं खुल पाया।
+    </div>
+
+
+    <!-- PDF AREA -->
+    <div id="viewerContainer">
+
+        <canvas id="pdfCanvas"></canvas>
+
+    </div>
+
+
+    <!-- PDF.JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs"
+            type="module"></script>
+
+
+    <script type="module">
+
+        import * as pdfjsLib
+            from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
+
+
+        /*
+            PDF.js Worker
+        */
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
+
+        /*
+            PDF URL
+
+            Later our Django detail page will pass
+            the selected PDF URL here.
+        */
+
+        const params = new URLSearchParams(
+            window.location.search
+        );
+
+        const pdfUrl =
+            params.get("url");
+
+
+        /*
+            Elements
+        */
+
+        const canvas =
+            document.getElementById("pdfCanvas");
+
+        const ctx =
+            canvas.getContext("2d");
+
+        const loading =
+            document.getElementById("loading");
+
+        const errorMessage =
+            document.getElementById("errorMessage");
+
+        const pageNumberInput =
+            document.getElementById("pageNumber");
+
+        const pageCount =
+            document.getElementById("pageCount");
+
+        const zoomValue =
+            document.getElementById("zoomValue");
+
+        const prevPage =
+            document.getElementById("prevPage");
+
+        const nextPage =
+            document.getElementById("nextPage");
+
+        const zoomIn =
+            document.getElementById("zoomIn");
+
+        const zoomOut =
+            document.getElementById("zoomOut");
+
+        const fitPage =
+            document.getElementById("fitPage");
+
+        const downloadPdf =
+            document.getElementById("downloadPdf");
+
+        const printPdf =
+            document.getElementById("printPdf");
+
+
+        /*
+            PDF variables
+        */
+
+        let pdfDoc = null;
+
+        let currentPage = 1;
+
+        let scale = 1.0;
+
+        let rendering = false;
+
+        let pendingPage = null;
+
+
+        /*
+            Render Page
+        */
+
+        async function renderPage(pageNum) {
+
+            if (!pdfDoc) {
+                return;
+            }
+
+            rendering = true;
+
+            const page =
+                await pdfDoc.getPage(pageNum);
+
+
+            const viewport =
+                page.getViewport({
+                    scale: scale
+                });
+
+
+            canvas.width =
+                viewport.width;
+
+            canvas.height =
+                viewport.height;
+
+
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+
+
+            await page.render(
+                renderContext
+            ).promise;
+
+
+            currentPage =
+                pageNum;
+
+
+            pageNumberInput.value =
+                currentPage;
+
+
+            pageNumberInput.max =
+                pdfDoc.numPages;
+
+
+            pageCount.textContent =
+                "/ " + pdfDoc.numPages;
+
+
+            zoomValue.textContent =
+                Math.round(scale * 100) + "%";
+
+
+            prevPage.disabled =
+                currentPage <= 1;
+
+
+            nextPage.disabled =
+                currentPage >= pdfDoc.numPages;
+
+
+            rendering = false;
+
+
+            if (pendingPage !== null) {
+
+                const next =
+                    pendingPage;
+
+                pendingPage = null;
+
+                renderPage(next);
+            }
+        }
+
+
+        /*
+            Go to Page
+        */
+
+        function queueRenderPage(pageNum) {
+
+            if (rendering) {
+
+                pendingPage =
+                    pageNum;
+
+            } else {
+
+                renderPage(pageNum);
+            }
+        }
+
+
+        /*
+            Previous
+        */
+
+        prevPage.addEventListener(
+            "click",
+            function() {
+
+                if (
+                    currentPage <= 1
+                ) {
+                    return;
+                }
+
+                queueRenderPage(
+                    currentPage - 1
+                );
+            }
+        );
+
+
+        /*
+            Next
+        */
+
+        nextPage.addEventListener(
+            "click",
+            function() {
+
+                if (
+                    !pdfDoc ||
+                    currentPage >= pdfDoc.numPages
+                ) {
+                    return;
+                }
+
+                queueRenderPage(
+                    currentPage + 1
+                );
+            }
+        );
+
+
+        /*
+            Page Number
+        */
+
+        pageNumberInput.addEventListener(
+            "change",
+            function() {
+
+                let page =
+                    parseInt(
+                        pageNumberInput.value,
+                        10
+                    );
+
+                if (
+                    isNaN(page)
+                ) {
+                    page = 1;
+                }
+
+                page =
+                    Math.max(
+                        1,
+                        Math.min(
+                            page,
+                            pdfDoc.numPages
+                        )
+                    );
+
+                queueRenderPage(page);
+            }
+        );
+
+
+        /*
+            Zoom In
+        */
+
+        zoomIn.addEventListener(
+            "click",
+            function() {
+
+                scale += 0.2;
+
+                queueRenderPage(
+                    currentPage
+                );
+            }
+        );
+
+
+        /*
+            Zoom Out
+        */
+
+        zoomOut.addEventListener(
+            "click",
+            function() {
+
+                scale -= 0.2;
+
+                if (scale < 0.4) {
+                    scale = 0.4;
+                }
+
+                queueRenderPage(
+                    currentPage
+                );
+            }
+        );
+
+
+        /*
+            Fit Page
+        */
+
+        fitPage.addEventListener(
+            "click",
+            async function() {
+
+                if (!pdfDoc) {
+                    return;
+                }
+
+                const page =
+                    await pdfDoc.getPage(
+                        currentPage
+                    );
+
+
+                const viewport =
+                    page.getViewport({
+                        scale: 1
+                    });
+
+
+                const container =
+                    document.getElementById(
+                        "viewerContainer"
+                    );
+
+
+                const availableWidth =
+                    container.clientWidth - 40;
+
+
+                const availableHeight =
+                    container.clientHeight - 40;
+
+
+                const widthScale =
+                    availableWidth /
+                    viewport.width;
+
+
+                const heightScale =
+                    availableHeight /
+                    viewport.height;
+
+
+                scale =
+                    Math.min(
+                        widthScale,
+                        heightScale
+                    );
+
+
+                queueRenderPage(
+                    currentPage
+                );
+            }
+        );
+
+
+        /*
+            Keyboard shortcuts
+        */
+
+        document.addEventListener(
+            "keydown",
+            function(event) {
+
+                if (
+                    event.key === "ArrowLeft"
+                ) {
+                    prevPage.click();
+                }
+
+                if (
+                    event.key === "ArrowRight"
+                ) {
+                    nextPage.click();
+                }
+
+                if (
+                    event.key === "+"
+                ) {
+                    zoomIn.click();
+                }
+
+                if (
+                    event.key === "-"
+                ) {
+                    zoomOut.click();
+                }
+            }
+        );
+
+
+        /*
+            Download
+        */
+
+        downloadPdf.addEventListener(
+            "click",
+            function() {
+
+                if (!pdfUrl) {
+                    return;
+                }
+
+                window.open(
+                    pdfUrl,
+                    "_blank"
+                );
+            }
+        );
+
+
+        /*
+            Print
+
+            Opens the original PDF in a new tab
+            so browser print controls can be used.
+        */
+
+        printPdf.addEventListener(
+            "click",
+            function() {
+
+                if (!pdfUrl) {
+                    return;
+                }
+
+                const printWindow =
+                    window.open(
+                        pdfUrl,
+                        "_blank"
+                    );
+
+                if (printWindow) {
+
+                    printWindow.focus();
+
+                    setTimeout(
+                        function() {
+                            printWindow.print();
+                        },
+                        1500
+                    );
+                }
+            }
+        );
+
+
+        /*
+            Load PDF
+        */
+
+        async function loadPDF() {
+
+            if (!pdfUrl) {
+
+                loading.style.display =
+                    "none";
+
+                errorMessage.style.display =
+                    "flex";
+
+                errorMessage.textContent =
+                    "PDF URL नहीं मिला।";
+
+                return;
+            }
+
+
+            try {
+
+                const loadingTask =
+                    pdfjsLib.getDocument({
+                        url: pdfUrl
+                    });
+
+
+                pdfDoc =
+                    await loadingTask.promise;
+
+
+                pageCount.textContent =
+                    "/ " + pdfDoc.numPages;
+
+
+                pageNumberInput.max =
+                    pdfDoc.numPages;
+
+
+                loading.style.display =
+                    "none";
+
+
+                await renderPage(1);
+
+
+            } catch (error) {
+
+                console.error(
+                    "PDF.js error:",
+                    error
+                );
+
+
+                loading.style.display =
+                    "none";
+
+
+                errorMessage.style.display =
+                    "flex";
+
+
+                errorMessage.textContent =
+                    "PDF preview नहीं खुल पाया। PDF को नए tab में खोलने के लिए left-side PDF link का उपयोग करें।";
+            }
+        }
+
+
+        /*
+            Start
+        */
+
+        loadPDF();
+
+    </script>
+
+</body>
+</html>

@@ -15,6 +15,7 @@ from .views import (
     excel_upload,
     pdf_download,
     serve_pdf,
+    pdf_viewer,
 )
 
 urlpatterns = [
@@ -101,5 +102,11 @@ urlpatterns = [
         'tl-records/<int:pk>/pdf/<str:file_type>/',
         serve_pdf,
         name='serve_pdf'
+    ),
+    
+    path(
+        'pdf-viewer/',
+        pdf_viewer,
+        name='pdf_viewer'
     ),
 ]

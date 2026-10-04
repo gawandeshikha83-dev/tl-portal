@@ -620,14 +620,17 @@
 
                 {% if record.tl_pdf_drive_url or record.tl_pdf or record.answer_pdf_drive_url or record.answer_pdf %}
 
-                    <div class="pdf-viewer">
-                        <iframe id="pdfViewer"
-                                src="about:blank"
-                                title="PDF Preview"
-                                allow="autoplay"
-                                loading="eager">
-                        </iframe>
-                    </div>
+                    <div class="pdf-viewer" style="position:relative; width:100%; height:75vh; min-height:600px; overflow:hidden; background:#f1f5f9; border-radius:10px;">
+
+    <iframe
+        id="pdfViewer"
+        src="about:blank"
+        title="PDF Preview"
+        style="width:100%; height:100%; border:0; display:block;"
+        loading="eager">
+    </iframe>
+
+</div>
 
                     <div class="pdf-open-fallback">
                         Preview नहीं दिखे तो
@@ -687,7 +690,12 @@ function toggleSidebar() {
 const tlPdfUrl = "{% if record.tl_pdf_drive_url %}{{ record.tl_pdf_drive_url|escapejs }}{% elif record.tl_pdf %}{{ record.tl_pdf.url|escapejs }}{% endif %}";
 const answerPdfUrl = "{% if record.answer_pdf_drive_url %}{{ record.answer_pdf_drive_url|escapejs }}{% elif record.answer_pdf %}{{ record.answer_pdf.url|escapejs }}{% endif %}";
 
-/* Convert a standard Google Drive file URL to its preview URL */
+/*
+    PDF.js viewer
+
+    Google Drive files are opened through Drive's direct preview URL.
+    PDF.js will be loaded inside the viewer page.
+*/
 function getDrivePreviewUrl(url) {
     if (!url) return "";
 
@@ -720,8 +728,12 @@ function getDrivePreviewUrl(url) {
 
     return url;
 }
-/* Load selected PDF into the right-side preview */
+
+/*
+    Load selected PDF
+*/
 function loadPDF(url, selectedButton) {
+
     const viewer = document.getElementById("pdfViewer");
     const openLink = document.getElementById("openPdfLink");
 
@@ -742,21 +754,32 @@ function loadPDF(url, selectedButton) {
     }
 }
 
+/* TL PDF */
 function showTL() {
-    loadPDF(tlPdfUrl, document.getElementById("tlButton"));
+    loadPDF(
+        tlPdfUrl,
+        document.getElementById("tlButton")
+    );
 }
 
+/* ANSWER PDF */
 function showAnswer() {
-    loadPDF(answerPdfUrl, document.getElementById("answerButton"));
+    loadPDF(
+        answerPdfUrl,
+        document.getElementById("answerButton")
+    );
 }
 
-/* Open TL PDF by default; if unavailable, show Answer PDF */
+/* DEFAULT PDF */
 document.addEventListener("DOMContentLoaded", function() {
+
     if (tlPdfUrl) {
         showTL();
+
     } else if (answerPdfUrl) {
         showAnswer();
     }
+
 });
 </script>
 

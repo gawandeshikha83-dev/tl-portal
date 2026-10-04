@@ -537,20 +537,42 @@ def tl_records(request):
 
 def tl_detail(request, pk):
 
+    # --------------------------------------------------------
+    # CURRENT RECORD
+    # --------------------------------------------------------
+
+    record = get_object_or_404(
+        TimeLimit,
+        pk=pk
+    )
+
+    # --------------------------------------------------------
+    # STATUS-WISE RECORDS
+    # Pending record → only Pending navigation
+    # Disposed record → only Disposed navigation
+    # --------------------------------------------------------
+
     records = list(
         TimeLimit.objects
+        .filter(
+            current_status=record.current_status
+        )
         .order_by(
             'sno',
             'id'
         )
     )
 
+    # --------------------------------------------------------
+    # CURRENT RECORD INDEX
+    # --------------------------------------------------------
+
     current_index = next(
         (
             index
-            for index, record
+            for index, item
             in enumerate(records)
-            if record.pk == pk
+            if item.pk == record.pk
         ),
         None
     )
@@ -561,8 +583,6 @@ def tl_detail(request, pk):
             'TL record not found.',
             status=404
         )
-
-    record = records[current_index]
 
     # --------------------------------------------------------
     # PREVIOUS
@@ -591,6 +611,10 @@ def tl_detail(request, pk):
     else:
 
         next_record = None
+
+    # --------------------------------------------------------
+    # DISPLAY
+    # --------------------------------------------------------
 
     return render(
         request,
