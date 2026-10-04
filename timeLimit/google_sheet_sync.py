@@ -355,9 +355,16 @@ def sync_sheet_to_portal():
 
     from .models import TimeLimit
 
+    # ========================================================
+    # GOOGLE SHEET DATA
+    # ========================================================
+
     sheet_records = get_google_sheet_data()
 
     synced_count = 0
+
+    # Sheet में मौजूद सभी TL Numbers
+    sheet_tl_nos = set()
 
     for data in sheet_records:
 
@@ -371,21 +378,21 @@ def sync_sheet_to_portal():
         if not tl_no:
             continue
 
+        sheet_tl_nos.add(tl_no)
+
         try:
 
             record = TimeLimit.objects.filter(
                 tl_no=tl_no,
             ).first()
 
-            # ------------------------------------------------
+            # =================================================
             # EXISTING RECORD
-            # ------------------------------------------------
+            # =================================================
 
             if record:
 
-                record.sno = data.get(
-                    "sno"
-                )
+                record.sno = data.get("sno")
 
                 record.received_date = data.get(
                     "received_date"
@@ -424,25 +431,21 @@ def sync_sheet_to_portal():
                 record.current_status = data.get(
                     "current_status",
                     "Pending",
-                )
+                ) or "Pending"
 
-                # --------------------------------------------
-                # IMPORTANT:
-                # Blank Sheet PDF URL will NOT erase
-                # an existing Django PDF Drive URL.
-                # --------------------------------------------
+                # ---------------------------------------------
+                # PDF URL
+                # Blank Sheet URL existing URL को erase
+                # नहीं करेगा.
+                # ---------------------------------------------
 
-                if data.get(
-                    "tl_pdf_drive_url"
-                ):
+                if data.get("tl_pdf_drive_url"):
 
                     record.tl_pdf_drive_url = data.get(
                         "tl_pdf_drive_url"
                     )
 
-                if data.get(
-                    "answer_pdf_drive_url"
-                ):
+                if data.get("answer_pdf_drive_url"):
 
                     record.answer_pdf_drive_url = data.get(
                         "answer_pdf_drive_url"
@@ -455,17 +458,15 @@ def sync_sheet_to_portal():
                     tl_no,
                 )
 
-            # ------------------------------------------------
+            # =================================================
             # NEW RECORD
-            # ------------------------------------------------
+            # =================================================
 
             else:
 
-                record = TimeLimit.objects.create(
+                TimeLimit.objects.create(
 
-                    sno=data.get(
-                        "sno"
-                    ),
+                    sno=data.get("sno"),
 
                     tl_no=tl_no,
 
@@ -506,7 +507,7 @@ def sync_sheet_to_portal():
                     current_status=data.get(
                         "current_status",
                         "Pending",
-                    ),
+                    ) or "Pending",
 
                     tl_pdf_drive_url=data.get(
                         "tl_pdf_drive_url",
@@ -534,10 +535,38 @@ def sync_sheet_to_portal():
                 error,
             )
 
+    # ========================================================
+    # DELETE RECORDS
+    # ========================================================
+    # जो TL Render DB में है लेकिन Google Sheet में नहीं है
+    # उसे Render DB से delete किया जाएगा.
+    # ========================================================
+
+    deleted_records = TimeLimit.objects.exclude(
+        tl_no__in=sheet_tl_nos
+    )
+
+    deleted_count = deleted_records.count()
+
+    if deleted_count:
+
+        for record in deleted_records:
+
+            print(
+                "DELETING FROM PORTAL:",
+                record.tl_no,
+            )
+
+        deleted_records.delete()
+
+    # ========================================================
+    # FINAL RESULT
+    # ========================================================
 
     print(
         "GOOGLE SHEET → PORTAL:",
-        f"{synced_count} records synced.",
+        f"{synced_count} records synced,",
+        f"{deleted_count} records deleted.",
     )
 
     return synced_count
