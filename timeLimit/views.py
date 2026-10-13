@@ -453,11 +453,21 @@ def tl_records(request):
             current_status=status
         )
 
-    # --------------------------------------------------------
-    # ORDER
-    # --------------------------------------------------------
+   # --------------------------------------------------------
+# SECTION-WISE SORTING
+# --------------------------------------------------------
 
+sort = request.GET.get('sort', 'az')
+
+if sort == 'za':
     records = records.order_by(
+        '-section_name',
+        'sno',
+        'id'
+    )
+else:
+    records = records.order_by(
+        'section_name',
         'sno',
         'id'
     )
@@ -506,6 +516,8 @@ def tl_records(request):
         'selected_year': year,
 
         'selected_status': status,
+       
+        'sort': sort,
 
     }
 
