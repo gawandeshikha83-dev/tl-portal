@@ -242,7 +242,18 @@
             font-weight: 700;
             color: #1d4ed8;
         }
-
+<!-- SECTION ORDER -->
+<div class="field">
+    <label>Section Order</label>
+    <select name="sort">
+        <option value="az" {% if sort == "az" %}selected{% endif %}>
+            Section A–Z
+        </option>
+        <option value="za" {% if sort == "za" %}selected{% endif %}>
+            Section Z–A
+        </option>
+    </select>
+</div>
         /* ================= STATUS ================= */
 
         .status {
