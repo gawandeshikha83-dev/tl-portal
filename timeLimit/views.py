@@ -473,6 +473,25 @@ def tl_records(request):
         )
 
     # --------------------------------------------------------
+    # TL NO. AND SECTION SORTING
+    # --------------------------------------------------------
+
+    sort_tl = request.GET.get('sort_tl', '')
+    sort_section = request.GET.get('sort_section', '')
+
+    if sort_tl == 'asc':
+        records = records.order_by('tl_no', 'sno', 'id')
+    elif sort_tl == 'desc':
+        records = records.order_by('-tl_no', 'sno', 'id')
+    elif sort_section == 'asc':
+        records = records.order_by('section_name', 'sno', 'id')
+    elif sort_section == 'desc':
+        records = records.order_by('-section_name', 'sno', 'id')
+    else:
+        records = records.order_by('sno', 'id')
+
+
+    # --------------------------------------------------------
     # SECTION LIST
     # --------------------------------------------------------
 
@@ -518,6 +537,10 @@ def tl_records(request):
         'selected_status': status,
        
         'sort': sort,
+
+        'sort_tl': sort_tl,
+
+        'sort_section': sort_section,
 
     }
 
@@ -1041,32 +1064,19 @@ def excel_download(request):
     sheet.title = 'TL Records'
 
     headers = [
-
-        'स.क्र.',
-
-        'TL No.',
-
-        'प्राप्ति दिनांक',
-
-        'प्रेषक',
-
-        'क्र/दिनांक',
-
-        'विषय',
-
-        'संबंधित शाखा का नाम',
-
-        'विवरण',
-
-        'वर्तमान स्थिति',
-
-        'स्थिति',
-
-        'TL PDF',
-
-        'Answer PDF',
-
-    ]
+    'स.क्र.',
+    'TL No.',
+    'प्राप्ति दिनांक',
+    'प्रेषक',
+    'क्र/दिनांक',
+    'विषय',
+    'संबंधित शाखा का नाम',
+    'विवरण',
+    'वर्तमान स्थिति',
+    'स्थिति',
+    'TL PDF',
+    'Answer PDF',
+ ]
 
     sheet.append(headers)
 
