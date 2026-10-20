@@ -453,24 +453,24 @@ def tl_records(request):
             current_status=status
         )
 
-   # --------------------------------------------------------
-# SECTION-WISE SORTING
-# --------------------------------------------------------
+    # --------------------------------------------------------
+    # SECTION-WISE SORTING
+    # --------------------------------------------------------
 
-sort = request.GET.get('sort', 'az')
+    sort = request.GET.get('sort', 'az')
 
-if sort == 'za':
-    records = records.order_by(
-        '-section_name',
-        'sno',
-        'id'
-    )
-else:
-    records = records.order_by(
-        'section_name',
-        'sno',
-        'id'
-    )
+    if sort == 'za':
+        records = records.order_by(
+            '-section_name',
+            'sno',
+            'id'
+        )
+    else:
+        records = records.order_by(
+            'section_name',
+            'sno',
+            'id'
+        )
 
     # --------------------------------------------------------
     # SECTION LIST
